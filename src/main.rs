@@ -1,7 +1,6 @@
-use std::result::Result;
 use serenity:: {
     async_trait,
-    model::{event::ThreadMembersUpdateEvent,channel::{Message}, gateway::{Ready}},
+    model::{voice::VoiceState,id::GuildId,channel::{Message}, gateway::{Ready}},
     prelude::*,
 };
 
@@ -10,12 +9,17 @@ mod commandFunctions;
 
 struct Handler;
 
-const TOKEN:&str = "OTE5Njk0MTczMDU2MTcyMDQy.YbZh8Q.BHeKuu4njeRBkqK4mr_tsLv3mFY";
+const TOKEN:&str = "OTE5Njk0MTczMDU2MTcyMDQy.YbZh8Q.RPgY_z3rRDHZqtPkQU47kQhN0vM";
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn thread_members_update(&self,ctx:Context,thread_members_update: ThreadMembersUpdateEvent) {
-        println!("te has unido al canal con id {}", thread_members_update.id);
+    async fn voice_state_update(&self, ctx:Context, arg2: Option<GuildId>, new: VoiceState) {
+        let membersInChannel = match new.member {
+            Some(members) => members,
+            None => return 
+        };
+
+        println!("Channel: {:?}\n member: {}",new.channel_id, membersInChannel.user.name);
     }
 
     async fn message(&self, ctx:Context, msg: Message) {
@@ -47,17 +51,7 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, ctx:Context, ready:Ready) {
-        let channel = match ctx.http.get_channels(893227377704972338).await {
-            Ok(channel) => channel,
-            Err(why) => return ,
-        };
-        for chl in channel.iter() {
-            println!("Channel name {} \n Channel type {:?}", chl.name, chl.kind);
-        }
-
-        if let Err(why) = ctx.http.get_channel_active_threads(893227377704972341).await {
-            println!("error {}", why);
-        };
+        println!("{} is connected!", ready.user.name);
     }
 }
 
