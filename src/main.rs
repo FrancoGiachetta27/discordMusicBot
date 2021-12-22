@@ -1,11 +1,12 @@
 use serenity:: {
     async_trait,
-    model::{voice::VoiceState,id::GuildId,channel::{Message}, gateway::{Ready}},
+    model::{voice::VoiceState,id::GuildId,channel::{Message, Channel, ChannelType}, gateway::{Ready}},
+    cache::Cache,
     prelude::*,
 };
 
 mod stringToVec;
-mod commandFunctions;
+mod commands;
 
 struct Handler;
 
@@ -13,41 +14,68 @@ const TOKEN:&str = "OTE5Njk0MTczMDU2MTcyMDQy.YbZh8Q.RPgY_z3rRDHZqtPkQU47kQhN0vM"
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn voice_state_update(&self, ctx:Context, arg2: Option<GuildId>, new: VoiceState) {
-        let membersInChannel = match new.member {
-            Some(members) => members,
-            None => return 
-        };
+   // async fn voice_state_update(&self, ctx:Context, arg2: Option<GuildId>, new: VoiceState) {
+        // let membersInChannel = match new.member {
+        //     Some(member) => member,
+        //     None => return 
+        // };
 
-        println!("Channel: {:?}\n member: {}",new.channel_id, membersInChannel.user.name);
-    }
+        // println!("Channel: {:?}\n member: {}",new.channel_id, membersInChannel.user.name);
+   // }
 
     async fn message(&self, ctx:Context, msg: Message) {
         let msgVec:Vec<&str> = stringToVec::convert(&msg.content); 
-        
-        let channel = match ctx.http.get_channels(893227377704972338).await {
-            Ok(channel) => channel,
-            Err(why) => return ,
+
+        let guildId = match msg.guild_id {
+            Some(id) => id,
+            None => return 
         };
 
-            if msgVec[0] == "-p" {
+        if msgVec[0] == "-p" {
+            let guildChannels = guildId.channels(&ctx.http).await.unwrap();
+            let mut i = 0;
+
+            for (id,chl) in guildChannels.iter() {
                 
-            }else if msgVec[0] == "-stop" {
+                match chl.kind {
+                    ChannelType::Voice => chl,
+                    _ => continue
+                };
 
-                if let Err(why) = msg.channel_id.say(&ctx.http, "cancion skipeada").await {
-                    println!("Error sending message: {:?}", why);
-                }
-            }else if msgVec[0] == "-skip" {
+                let members = chl.members(&ctx.cache).await.unwrap();
 
-                if let Err(why) = msg.channel_id.say(&ctx.http, "reproduccion frenada").await {
-                    println!("Error sending message: {:?}", why);
-                }
-            }else {
+                while true {
+                    if !members.is_empty(){
+                        if members[i].user.id == msg.author.id {
+                            println!("found {} in channel: {}", msg.author.id, chl.name);
 
-                if let Err(why) = msg.channel_id.say(&ctx.http, msg.channel_id).await {
-                    println!("Error sending message: {:?}", why);
+                            break;
+                        }
+                        
+                        i += 1;
+                    }
                 }
+
+                println!("id: {},channel kind: {:?}",id, chl.name);
             }
+
+        }else if msgVec[0] == "-stop" {
+            if let Err(why) = msg.channel_id.say(&ctx.http, "cancion skipeada").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }else if msgVec[0] == "-skip" {
+            if let Err(why) = msg.channel_id.say(&ctx.http, "reproduccion frenada").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }else if msgVec[0] == "-resume" {
+            if let Err(why) = msg.channel_id.say(&ctx.http, "hola").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }else if msgVec[0] == "-pause" {
+            if let Err(why) = msg.channel_id.say(&ctx.http, "hola").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }
     }
 
     async fn ready(&self, ctx:Context, ready:Ready) {
@@ -62,4 +90,6 @@ async fn main() {
     if let Err(why) = client.start().await {
         print!("Client Error {:?}", why);
     }
+
+    
 }
