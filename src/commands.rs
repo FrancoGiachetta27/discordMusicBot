@@ -4,6 +4,8 @@ use serenity::{
     client::Context,
 };
 
+use songbird::SerenityInit;
+
 mod Commands{
     pub async fn play() {}
 
