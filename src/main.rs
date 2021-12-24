@@ -1,17 +1,10 @@
+
 use serenity:: {
     async_trait,
-    futures::channel::mpsc::UnboundedSender,
-    gateway::InterMessage,
-    model::{voice::VoiceState,id::{GuildId,UserId},channel::{Message,ChannelType}, gateway::{Ready}},
-    client::bridge::voice::VoiceGatewayManager,
-    cache::Cache,
+    model::{channel::{Message}, gateway::{Ready}},
     framework::standard::{
-        buckets::{LimitedFor, RevertBucket},
         help_commands,
         macros::{check, command, group, help, hook},
-        Args,
-        CommandGroup,
-        CommandOptions,
         CommandResult,
         StandardFramework,
     },
@@ -20,11 +13,15 @@ use serenity:: {
 use songbird::SerenityInit;
 
 mod botFunctions;
+mod stringToVector;
+mod musicbot;
+mod searcher;
+mod queue;
 
 struct Handler;
 // struct VoiceManager; 
 #[group]
-#[commands(play,pause,resume,skip)]
+#[commands(play,pause,resume,stop,skip)]
 struct General;
 
 const TOKEN:&str = "OTE5Njk0MTczMDU2MTcyMDQy.YbZh8Q.RPgY_z3rRDHZqtPkQU47kQhN0vM";
@@ -41,29 +38,24 @@ impl EventHandler for Handler {
     }
 }
 
-
 #[tokio::main]
 async fn main() {
     let framemwork = StandardFramework::new()
         .group(&GENERAL_GROUP)
-        .configure(|c| c.with_whitespace(true).prefix("-"));
+        .configure(|c| c.with_whitespace(false).prefix("-"));
 
     let mut client = Client::builder(TOKEN).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
-
     if let Err(why) = client.start().await {
         print!("Client Error {:?}", why);
     }
 }
 
+// functions which are called when a command is sent. For example: -play.....
+
 #[command]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
-    
     botFunctions::join(&ctx, &msg).await?;
-    botFunctions::play(ctx,msg).await?;
-
-    if let Err(why) = msg.channel_id.say(&ctx.http,"ready to play").await {
-        println!("Error: {}",why);
-    };
+    musicbot::play(&ctx,&msg).await?;
     
     Ok(())
 }
@@ -79,7 +71,7 @@ async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
-    if let Err(why) = msg.channel_id.say(&ctx.http,"ready to resume").await {
+    if let Err(why) = &msg.channel_id.say(&ctx.http,"ready to resume").await {
         println!("Error: {}",why);
     };
 
@@ -87,10 +79,22 @@ async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
+async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
+    musicbot::stop(&ctx,&msg).await?;
+    botFunctions::leave(&ctx,&msg).await?;
+
+    if let Err(why) = msg.channel_id.say(&ctx.http,"ready to pause").await {
+        println!("Error: {}",why);
+    };
+    
+    Ok(())
+}
+
+#[command]
 async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
     botFunctions::leave(&ctx,&msg).await?;
 
-    if let Err(why) = msg.channel_id.say(&ctx.http,"readu to skip").await {
+    if let Err(why) = &msg.channel_id.say(&ctx.http,"readu to skip").await {
         println!("Error: {}",why);
     };
 
