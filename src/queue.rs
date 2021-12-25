@@ -1,5 +1,6 @@
 use serenity::{
-    model::{channel::Message},
+    model::{guild::Guild,channel::Message},
+    prelude::*,
     client::Context,
     framework::standard::{
         CommandResult,
@@ -7,7 +8,9 @@ use serenity::{
 };
 use songbird::{
     Call,
-    tracks::{TrackQueue},
+    tracks::{ 
+        TrackQueue,
+    },
 };
 
 use crate::searcher;
@@ -17,15 +20,12 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, handl
     if let Some(trackName) = trackName {
         let source = match searcher::getSource(&ctx,&msg,&trackName).await? {
             Some(source) => source,
-            None => {
-                msg.reply(&ctx.http, "No se encontro esa cancion").await?;
-            
-                return Ok(None);
-            }
+            None => { return Ok(None); }
         };
 
         handler.enqueue_source(source);
     }
 
+    println!("Queue {:?}", handler.queue());
     Ok(Some(handler.queue()))   
 } 

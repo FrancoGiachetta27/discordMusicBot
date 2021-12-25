@@ -6,7 +6,7 @@ use serenity::{
         CommandResult,
     }
 };
-use songbird::{SerenityInit};
+
 
 // makes the bot join the channel where the message's author is, if not in any channel it won't work 
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
@@ -17,7 +17,7 @@ pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let connectTo = match channelId {
         Some(channel) => channel,
         None => {
-            msg.channel_id.say(&ctx.http, "No estas en un canal de voz").await?;
+            msg.channel_id.say(&ctx.http, "❌ | No estas en un canal de voz").await?;
 
             return Ok(());
         }
@@ -39,7 +39,7 @@ pub async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
 
     if hasHandler {
         if let Err(why) = manager.remove(guildId).await {
-            msg.channel_id.say(&ctx.http, "Error al desconectar el bot").await?;
+            msg.channel_id.say(&ctx.http, "❌ | Error al desconectar el bot").await?;
         }
 
         msg.channel_id.say(&ctx.http, "Bot desconectado").await?;

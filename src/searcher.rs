@@ -22,7 +22,7 @@ pub async fn getSource(ctx: &Context, msg: &Message, trackName:&str) -> CommandR
             Err(why) => {
                 println!("Err starting source: {:?}", why);
 
-                msg.channel_id.say(&ctx.http, "No se ha podido encontrar esa cacion").await?;
+                msg.channel_id.say(&ctx.http, "❌ | No se ha podido encontrar esa cacion").await?;
 
                 return Ok(None);
             }
@@ -33,7 +33,7 @@ pub async fn getSource(ctx: &Context, msg: &Message, trackName:&str) -> CommandR
             Err(why) => {
                 println!("Err starting source: {:?}", why);
 
-                msg.channel_id.say(&ctx.http, "No se ha podido encontrar esa cacion").await?;
+                msg.channel_id.say(&ctx.http, "❌ | No se ha podido encontrar esa cancion").await?;
 
                 return Ok(None);
             }

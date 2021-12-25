@@ -3,7 +3,6 @@ use serenity:: {
     async_trait,
     model::{channel::{Message}, gateway::{Ready}},
     framework::standard::{
-        help_commands,
         macros::{check, command, group, help, hook},
         CommandResult,
         StandardFramework,
@@ -14,7 +13,7 @@ use songbird::SerenityInit;
 
 mod botFunctions;
 mod stringToVector;
-mod musicbot;
+mod musicBot;
 mod searcher;
 mod queue;
 
@@ -45,6 +44,7 @@ async fn main() {
         .configure(|c| c.with_whitespace(false).prefix("-"));
 
     let mut client = Client::builder(TOKEN).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
+    
     if let Err(why) = client.start().await {
         print!("Client Error {:?}", why);
     }
@@ -55,32 +55,28 @@ async fn main() {
 #[command]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     botFunctions::join(&ctx, &msg).await?;
-    musicbot::play(&ctx,&msg).await?;
+    musicBot::play(&ctx,&msg).await?;
     
     Ok(())
 }
 
 #[command]
 async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
-    if let Err(why) = msg.channel_id.say(&ctx.http,"ready to pause").await {
-        println!("Error: {}",why);
-    };
-    
+    musicBot::pause(&ctx, &msg).await?;
+
     Ok(())
 }
 
 #[command]
 async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
-    if let Err(why) = &msg.channel_id.say(&ctx.http,"ready to resume").await {
-        println!("Error: {}",why);
-    };
+    musicBot::resume(ctx, msg).await?;
 
     Ok(())
 }
 
 #[command]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
-    musicbot::stop(&ctx,&msg).await?;
+    musicBot::stop(&ctx,&msg).await?;
     botFunctions::leave(&ctx,&msg).await?;
 
     if let Err(why) = msg.channel_id.say(&ctx.http,"ready to pause").await {
@@ -92,11 +88,7 @@ async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
-    botFunctions::leave(&ctx,&msg).await?;
-
-    if let Err(why) = &msg.channel_id.say(&ctx.http,"readu to skip").await {
-        println!("Error: {}",why);
-    };
+    musicBot::skip(ctx, msg).await?;
 
     Ok(())
 }

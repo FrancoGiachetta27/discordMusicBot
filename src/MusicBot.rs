@@ -6,17 +6,7 @@ use serenity::{
         CommandResult,
     }
 };
-use songbird::{
-    Call,
-    SerenityInit, 
-    tracks::{TrackQueue},
-    input::{
-        Input,
-        ytdl,
-        ytdl_search
-    },
-};
-use tokio::sync::MutexGuard;
+
 
 use crate::stringToVector;
 use crate::queue;
@@ -27,12 +17,11 @@ pub async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
     let trackName:&str = stringToVector::convert(&msg.content[..])[1];
-    let source:Input;
     
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
-            msg.reply(&ctx.http, "Not in a voice channel").await?;
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
 
             return Ok(());
         },
@@ -43,16 +32,14 @@ pub async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     let trackQueue = match queue::queue(ctx,msg,Some(trackName),&mut handler).await? {
         Some(queue) => queue,
         None => {
-            return Ok(())
+            return Ok(());
         }
     };
     
-    while trackQueue.is_empty() {
+    while !trackQueue.is_empty() {
         let track = match trackQueue.dequeue(0) {
             Some(track) => track,
             None => {
-                msg.channel_id.say(&ctx.http,"No hay mas canciones para reporducir...").await?;
-
                 return Ok(());
             }
         };
@@ -66,10 +53,16 @@ pub async fn play(ctx: &Context, msg: &Message) -> CommandResult {
             }
         };
 
-        while let songbird::tracks::PlayMode::Play = trackStatus.playing {
-
-       }
+        if let songbird::tracks::PlayMode::Pause = trackStatus.playing {
+            track.play()?;
+            trackQueue.modify_queue(|queue| queue.remove(0)); 
+        }else if let songbird::tracks::PlayMode::Stop = trackStatus.playing {
+            track.play()?;
+            trackQueue.modify_queue(|queue| queue.remove(0)); //takes the skiped track, which is now the first item in the trackQueue and deletes it
+        };
     }
+
+    msg.channel_id.say(&ctx.http,"No hay canciones para reporducir...").await?;
 
     Ok(())
 }
@@ -83,19 +76,66 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
-            msg.reply(&ctx.http, "Not in a voice channel").await?;
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
 
             return Ok(());
         },
     };
 
     let mut handler = handlerLock.lock().await;
+
+    {
+        let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+            Some(queue) => queue,
+            None => {
+                return Ok(());
+            }
+        };
+
+        trackQueue.modify_queue(|queue| queue.clear()); // deletes the trackQueue
+    }
     
     handler.stop();
 
     Ok(())
 }
 
+//pauses the current track
+pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
+    let guild = msg.guild(&ctx.cache).await.unwrap();
+    let guildId = guild.id;
+    let manager = songbird::get(&ctx).await.unwrap().clone();
+    
+    let handlerLock = match manager.get(guildId) {
+        Some(handler) => handler,
+        None => {
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
+
+            return Ok(());
+        },
+    };
+
+    let mut handler = handlerLock.lock().await;
+
+    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+        Some(queue) => queue,
+        None => {
+            return Ok(());
+        }
+    };
+
+    match trackQueue.current() {
+        Some(track) => {
+            track.pause()?;
+        },
+        None => {
+            msg.reply(&ctx.http, "❌ | No hay mas canciones para reproducir").await?;
+        }
+    }
+
+
+    Ok(())
+}
 //Unpauses a the the bot
 pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
@@ -105,13 +145,29 @@ pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
-            msg.reply(&ctx.http, "Not in a voice channel").await?;
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
 
             return Ok(());
         },
     };
 
     let mut handler = handlerLock.lock().await;
+
+    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+        Some(queue) => queue,
+        None => {
+            return Ok(());
+        }
+    };
+
+    match trackQueue.current() {
+        Some(track) => {
+            track.play()?;
+        },
+        None => {
+            msg.reply(&ctx.http, "❌ | No hay mas canciones para reproducir").await?;
+        }
+    } 
 
     Ok(())
 }
@@ -125,13 +181,28 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
-            msg.reply(&ctx.http, "Not in a voice channel").await?;
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
 
             return Ok(());
         },
     };
 
     let mut handler = handlerLock.lock().await;
+
+    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+        Some(queue) => queue,
+        None => {
+            return Ok(());
+        }
+    };
+
+    trackQueue.skip();
+
+    trackQueue.modify_queue(|queue| { //takes the skiped track, which is now the first item in the trackQueue and deletes it
+        queue.remove(0);
+    });
+
+    println!("Queue {:?}", trackQueue);
 
     Ok(())
 }
