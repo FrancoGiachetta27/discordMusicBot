@@ -1,3 +1,4 @@
+use dotenv;
 use std::env;
 use serenity:: {
     async_trait,
@@ -37,11 +38,17 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().expect(".env file not found");
+    let token:String =  match env::var("TOKEN") {
+        Ok(val) => val,
+        Err(why) => panic!("{}", why)
+    };
+
     let framemwork = StandardFramework::new()
         .group(&GENERAL_GROUP)
         .configure(|c| c.with_whitespace(false).prefix("-"));
 
-    let mut client = Client::builder(env::var("TOKEN").unwrap()).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
+    let mut client = Client::builder(token).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
     
     if let Err(why) = client.start().await {
         print!("Client Error {:?}", why);
