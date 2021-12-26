@@ -38,20 +38,17 @@ pub async fn play(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let mut currentTrack = trackQueue.current();
-
+    let (mut trackStatus,mut currentTrack) = queue::dequeue(&ctx,&msg,trackQueue).await?;
     
     while !trackQueue.is_empty() {
-        let (trackStatus, currentTrack) = queue::dequeue(&ctx,&msg,trackQueue).await?;
-
-        if let Some(currentTrack) = currentTrack {
-            if let Some(trackStatus) = trackStatus {
+        if let Some(currentTrack) = &currentTrack {
+            if let Some(trackStatus) = &trackStatus {
                 if let PlayMode::Stop = trackStatus.playing {
                     currentTrack.play()?;
                 };
-
-                trackQueue.modify_queue(|queue| queue.remove(0)); 
             }
+        } else if let None = &currentTrack {
+            (trackStatus,currentTrack) = queue::dequeue(&ctx,&msg,trackQueue).await?;
         }
     }
 

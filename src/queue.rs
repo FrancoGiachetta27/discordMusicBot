@@ -32,17 +32,21 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, handl
         handler.enqueue_source(source);
     }
 
-    println!("Queue {:?}", handler.queue());
+    println!("Queue {:?}", handler.queue().current_queue());
     
     Ok(Some(handler.queue()))   
 } 
 
 pub async fn dequeue(ctx: &Context, msg: &Message, trackQueue:&TrackQueue) -> CommandResult<(Option<TrackState>,Option<TrackHandle>)>{
-   let currentTrack = match trackQueue.current() {
+    let currentTrack = match trackQueue.current() {
         Some(track) => Some(track),
         None => {
             let nextTrack = match trackQueue.dequeue(0) {
-                Some(track) => track.handle(),
+                Some(track) => {
+                    trackQueue.modify_queue(|queue| queue.remove(0)); 
+                    
+                    track.handle() 
+                },
                 None => { 
                     msg.channel_id.say(&ctx.http,"No hay mas caciones para reproducir").await?;
                     return Ok((None,None)); 
