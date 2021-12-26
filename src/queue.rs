@@ -23,9 +23,14 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, handl
             None => { return Ok(None); }
         };
 
+        if let Some(name) = &source.metadata.title {
+            msg.channel_id.say(&ctx.http,format!("Se ha agregado {} a la lista de canciones",name)).await?;
+        }
+
         handler.enqueue_source(source);
     }
 
     println!("Queue {:?}", handler.queue());
+    
     Ok(Some(handler.queue()))   
 } 

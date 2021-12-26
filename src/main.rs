@@ -55,6 +55,7 @@ async fn main() {
 #[command]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     botFunctions::join(&ctx, &msg).await?;
+    println!("Command");
     musicBot::play(&ctx,&msg).await?;
     
     Ok(())
