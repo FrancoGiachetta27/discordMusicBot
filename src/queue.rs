@@ -10,6 +10,8 @@ use songbird::{
     Call,
     tracks::{ 
         TrackQueue,
+        TrackState,
+        TrackHandle
     },
 };
 
@@ -34,3 +36,28 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, handl
     
     Ok(Some(handler.queue()))   
 } 
+
+pub async fn dequeue(ctx: &Context, msg: &Message, trackQueue:&TrackQueue) -> CommandResult<(Option<TrackState>,Option<TrackHandle>)>{
+   let currentTrack = match trackQueue.current() {
+        Some(track) => Some(track),
+        None => {
+            let nextTrack = match trackQueue.dequeue(0) {
+                Some(track) => track.handle(),
+                None => { 
+                    msg.channel_id.say(&ctx.http,"No hay mas caciones para reproducir").await?;
+                    return Ok((None,None)); 
+                } 
+            };
+
+            Some(nextTrack)
+        }
+    };    
+
+    let trackStatus = if let Some (currentTrack) = &currentTrack {
+        currentTrack.get_info().await?
+    }else{
+        return Ok((None,None));
+    };
+
+    Ok((Some(trackStatus),currentTrack))
+}

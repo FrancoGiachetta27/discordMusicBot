@@ -7,7 +7,7 @@ use serenity::{
     }
 };
 use songbird::{
-    tracks::{Queued, PlayMode, TrackState, TrackQueue, TrackHandle},
+    tracks::{PlayMode, TrackState, TrackQueue, TrackHandle},
 };
 
 use crate::stringToVector;
@@ -38,49 +38,20 @@ pub async fn play(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let mut currentTrack = match trackQueue.current() {
-        Some(track) => Some(track),
-        None => {
-            let nextTrack = match trackQueue.dequeue(0) {
-                Some(track) => Some(track.handle()),
-                None => None
-            };
+    let mut currentTrack = trackQueue.current();
 
-            nextTrack
-        }
-    };
-
-    while !trackQueue.is_empty() {
-        currentTrack = match trackQueue.current() {
-            Some(track) => Some(track),
-            None => {
-                let nextTrack = match trackQueue.dequeue(0) {
-                    Some(track) => Some(track.handle()),
-                    None => None
-                };
     
-                nextTrack
+    while !trackQueue.is_empty() {
+        let (trackStatus, currentTrack) = queue::dequeue(&ctx,&msg,trackQueue).await?;
+
+        if let Some(currentTrack) = currentTrack {
+            if let Some(trackStatus) = trackStatus {
+                if let PlayMode::Stop = trackStatus.playing {
+                    currentTrack.play()?;
+                };
+
+                trackQueue.modify_queue(|queue| queue.remove(0)); 
             }
-        };    
-
-        let trackStatus = match &currentTrack {
-            Some(currentTrack) => match currentTrack.get_info().await  {  
-                Ok(status) => status,
-                Err(why) => {
-                    println!("Error {}", why);
-                        
-                    return Ok(());
-                }
-            },
-            None => return Ok(())
-        };
-
-        if let PlayMode::Stop = trackStatus.playing {
-            if let Some(currentTrack) = &currentTrack {
-                currentTrack.play()?;
-            };
-
-            trackQueue.modify_queue(|queue| queue.remove(0)); 
         }
     }
 
@@ -220,11 +191,11 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
         None => ()
     };
 
-    trackQueue.skip()?;
-
     trackQueue.modify_queue(|queue| { //takes the skiped track, which is now the first item in the trackQueue and deletes it
         queue.remove(0);
     });
+
+    play(&ctx,&msg).await?;
 
     println!("Queue {:?}", trackQueue);
 

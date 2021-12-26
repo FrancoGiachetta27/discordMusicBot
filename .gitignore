@@ -3,3 +3,6 @@ target/
 
 # Lockfile
 Cargo.lock
+
+# vscode
+.vscode/
