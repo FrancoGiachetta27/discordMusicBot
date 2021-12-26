@@ -14,11 +14,11 @@ use crate::stringToVector;
 use crate::queue;
 
 //play a track
-pub async fn play(ctx: &Context, msg: &Message) -> CommandResult {
+pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-    let trackName:&str = stringToVector::convert(&msg.content[..])[1];
+    let playable = true;
     
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
@@ -31,25 +31,38 @@ pub async fn play(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
     
-    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,Some(trackName),&mut handler).await? {
+    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,trackName,&mut handler).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
         }
     };
 
-    let (mut trackStatus,mut currentTrack) = queue::dequeue(&ctx,&msg,trackQueue).await?;
+    let mut currentTrack = trackQueue.current();
     
-    while !trackQueue.is_empty() {
-        if let Some(currentTrack) = &currentTrack {
-            if let Some(trackStatus) = &trackStatus {
-                if let PlayMode::Stop = trackStatus.playing {
-                    currentTrack.play()?;
-                };
-            }
-        } else if let None = &currentTrack {
-            (trackStatus,currentTrack) = queue::dequeue(&ctx,&msg,trackQueue).await?;
+    let mut trackStatus = if let Some (currentTrack) = &currentTrack {
+        Some(currentTrack.get_info().await?)
+    }else{
+        return Ok(());
+    };
+    
+   
+    if let Some(currentTrack) = &currentTrack {
+        if let Some(trackStatus) = &trackStatus {
+            if let PlayMode::Play = trackStatus.playing {
+                println!("current {:?} \n", trackQueue.current());
+            }else if let PlayMode::Pause = trackStatus.playing {
+                trackQueue.modify_queue(|queue| queue.remove(0));
+            };
         }
+    } else if let None = &currentTrack {
+        currentTrack =  trackQueue.current();
+
+        trackStatus = if let Some (currentTrack) = &currentTrack {
+            Some(currentTrack.get_info().await?)
+        }else{
+            return Ok(());
+        };
     }
 
     Ok(())
@@ -72,18 +85,14 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    {
-        let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
-            Some(queue) => queue,
-            None => {
-                return Ok(());
-            }
-        };
+    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+        Some(queue) => queue,
+        None => {
+            return Ok(());
+        }
+    };
 
-        trackQueue.modify_queue(|queue| queue.clear()); // deletes the trackQueue
-    }
-    
-    handler.stop();
+    trackQueue.stop(); // stops the track and deletes the trackQueue
 
     Ok(())
 }
@@ -112,14 +121,7 @@ pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    match trackQueue.current() {
-        Some(track) => {
-            track.pause()?;
-        },
-        None => {
-            msg.reply(&ctx.http, "❌ | No hay mas canciones para reproducir").await?;
-        }
-    }
+    trackQueue.pause()?;
 
     Ok(())
 }
@@ -183,18 +185,17 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    match trackQueue.current() {
-        Some(track) => track.stop()?,
-        None => ()
-    };
+    trackQueue.skip()?;
 
-    trackQueue.modify_queue(|queue| { //takes the skiped track, which is now the first item in the trackQueue and deletes it
-        queue.remove(0);
+    trackQueue.modify_queue(|queue| {
+        println!("firstTrack {:?}",queue);
+
+        queue.remove(0); // remove the skipped track
     });
 
-    play(&ctx,&msg).await?;
-
-    println!("Queue {:?}", trackQueue);
+    if let Some(newTrack) = trackQueue.current() {
+        newTrack.play()?;
+    }
 
     Ok(())
 }
