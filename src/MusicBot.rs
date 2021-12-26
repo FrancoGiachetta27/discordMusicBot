@@ -175,6 +175,7 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
             return Ok(());
         },
     };
+    
 
     let mut handler = handlerLock.lock().await;
 

@@ -1,4 +1,4 @@
-
+use std::env;
 use serenity:: {
     async_trait,
     model::{channel::{Message}, gateway::{Ready}},
@@ -23,8 +23,6 @@ struct Handler;
 #[commands(play,pause,resume,stop,skip)]
 struct General;
 
-const TOKEN:&str = "OTE5Njk0MTczMDU2MTcyMDQy.YbZh8Q.RPgY_z3rRDHZqtPkQU47kQhN0vM";
-
 #[async_trait] 
 // functions related to event_handler
 impl EventHandler for Handler {
@@ -43,7 +41,7 @@ async fn main() {
         .group(&GENERAL_GROUP)
         .configure(|c| c.with_whitespace(false).prefix("-"));
 
-    let mut client = Client::builder(TOKEN).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
+    let mut client = Client::builder(env::var("TOKEN").unwrap()).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
     
     if let Err(why) = client.start().await {
         print!("Client Error {:?}", why);
