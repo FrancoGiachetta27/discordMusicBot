@@ -42,3 +42,7 @@ pub async fn getSource(ctx: &Context, msg: &Message, trackName:&str) -> CommandR
 
     Ok(Some(source))
 } 
+
+pub fn getTrackInfo(ctx: &Context, msg: &Message) {
+
+}

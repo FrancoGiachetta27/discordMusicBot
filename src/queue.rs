@@ -15,12 +15,12 @@ use songbird::{
     },
 };
 
-use crate::searcher;
+use crate::youtube;
 
 //enqueues the source of the track found on youtube and returns the full  
 pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, handler:&'a mut Call) -> CommandResult<Option<&'a TrackQueue>> {
     if let Some(trackName) = trackName {
-        let source = match searcher::getSource(&ctx,&msg,&trackName).await? {
+        let source = match youtube::getSource(&ctx,&msg,&trackName).await? {
             Some(source) => source,
             None => { return Ok(None); }
         };
@@ -36,22 +36,3 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, handl
     
     Ok(Some(handler.queue()))   
 } 
-
-pub async fn dequeue(ctx: &Context, msg: &Message, trackQueue:&TrackQueue) -> CommandResult<Option<TrackHandle>>{
-    let currentTrack = match trackQueue.current() {
-        Some(track) => Some(track),
-        None => {
-            let nextTrack = match trackQueue.dequeue(0) {
-                Some(track) => {track.handle()},
-                None => { 
-                    msg.channel_id.say(&ctx.http,"No hay mas caciones para reproducir").await?;
-                    return Ok(None); 
-                } 
-            };
-
-            Some(nextTrack)
-        }
-    };    
-
-    Ok(currentTrack)
-}

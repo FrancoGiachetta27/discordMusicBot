@@ -15,7 +15,7 @@ use songbird::SerenityInit;
 mod botFunctions;
 mod stringToVector;
 mod musicBot;
-mod searcher;
+mod youtube;
 mod queue;
 
 struct Handler;
@@ -60,7 +60,9 @@ async fn main() {
 #[command]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     let trackName:Vec<&str> = stringToVector::convert(&msg.content[..]);
+
     botFunctions::join(&ctx, &msg).await?;
+
     if trackName.len() == 2 {
         musicBot::play(&ctx,&msg,Some(trackName[1])).await?;
     }

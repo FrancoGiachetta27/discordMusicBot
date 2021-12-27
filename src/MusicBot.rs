@@ -10,7 +10,6 @@ use songbird::{
     tracks::{PlayMode, TrackState, TrackQueue, TrackHandle},
 };
 
-use crate::stringToVector;
 use crate::queue;
 
 //play a track
@@ -19,6 +18,7 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
     let playable = true;
+    let mut break_:bool = false;
     
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
@@ -38,31 +38,37 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
         }
     };
 
-    let mut currentTrack = trackQueue.current();
+    let mut currentTrack:Option<TrackHandle> = trackQueue.current();
     
-    let mut trackStatus = if let Some (currentTrack) = &currentTrack {
+    let mut trackStatus:Option<TrackState> = if let Some (currentTrack) = &currentTrack {
         Some(currentTrack.get_info().await?)
     }else{
         return Ok(());
     };
     
-   
-    if let Some(currentTrack) = &currentTrack {
-        if let Some(trackStatus) = &trackStatus {
-            if let PlayMode::Play = trackStatus.playing {
-                println!("current {:?} \n", trackQueue.current());
-            }else if let PlayMode::Pause = trackStatus.playing {
-                trackQueue.modify_queue(|queue| queue.remove(0));
+    while !trackQueue.is_empty(){
+        if let Some(currentTrack) = &currentTrack {
+            if let Some(trackStatus) = &trackStatus {
+                if let PlayMode::Pause = trackStatus.playing {
+                    trackQueue.modify_queue(|queue| queue.remove(0));
+                };
+            }
+        } else if let None = &currentTrack {
+            currentTrack = trackQueue.current();
+
+            trackStatus = if let Some(currentTrack) = &currentTrack {
+                Some(currentTrack.get_info().await?)
+            }else{
+                return Ok(());
             };
         }
-    } else if let None = &currentTrack {
-        currentTrack =  trackQueue.current();
 
-        trackStatus = if let Some (currentTrack) = &currentTrack {
-            Some(currentTrack.get_info().await?)
-        }else{
-            return Ok(());
-        };
+        break_ = msg.content[..].starts_with("-play") || msg.content[..].starts_with("-pause") || 
+                 msg.content[..].starts_with("-skip") || msg.content[..].starts_with("-stop");
+
+        if break_ {
+            break;
+        }
     }
 
     Ok(())

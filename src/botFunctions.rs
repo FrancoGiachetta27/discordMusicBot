@@ -7,7 +7,6 @@ use serenity::{
     }
 };
 
-
 // makes the bot join the channel where the message's author is, if not in any channel it won't work 
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = &msg.guild(&ctx.cache).await.unwrap(); // gets an instance of the server where the bot is in
@@ -24,8 +23,9 @@ pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     };
 
     let manager = songbird::get(&ctx).await.unwrap().clone(); //creates a voice client
-
-    let handler = manager.join(guildId, connectTo).await;
+    if let (handler,Err(why)) = manager.join(guildId, connectTo).await {
+        println!("JoinError {}",why);
+    }
 
     Ok(())
 }
