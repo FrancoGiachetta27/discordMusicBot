@@ -7,6 +7,7 @@ use serenity::{
     }
 };
 use songbird::{
+    SerenityInit,
     tracks::{PlayMode, TrackState, TrackQueue, TrackHandle},
 };
 
@@ -39,6 +40,8 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
     };
 
     let mut currentTrack:Option<TrackHandle> = trackQueue.current();
+
+   
     
     let mut trackStatus:Option<TrackState> = if let Some (currentTrack) = &currentTrack {
         Some(currentTrack.get_info().await?)

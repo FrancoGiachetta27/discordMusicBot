@@ -6,6 +6,7 @@ use serenity::{
         CommandResult,
     }
 };
+use songbird::SerenityInit;
 
 // makes the bot join the channel where the message's author is, if not in any channel it won't work 
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
