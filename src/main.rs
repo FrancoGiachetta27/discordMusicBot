@@ -88,10 +88,6 @@ async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
     musicBot::stop(&ctx,&msg).await?;
     botFunctions::leave(&ctx,&msg).await?;
-
-    if let Err(why) = msg.channel_id.say(&ctx.http,"ready to pause").await {
-        println!("Error: {}",why);
-    };
     
     Ok(())
 }

@@ -1,5 +1,8 @@
+use rand::Rng;
+use chrono::Duration;
 use serenity::{
     model::{channel::Message},
+    utils::Colour,
     prelude::*,
     client::Context,
     framework::standard::{
@@ -12,6 +15,7 @@ use songbird::{
 };
 
 use crate::queue;
+use crate::botFunctions;
 
 //play a track
 pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> CommandResult {
@@ -41,7 +45,9 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
 
     let mut currentTrack:Option<TrackHandle> = trackQueue.current();
 
-   
+    if let Some(track) = &currentTrack {
+        botFunctions::sendTrackInfo(&ctx,&msg,track).await;
+    }
     
     let mut trackStatus:Option<TrackState> = if let Some (currentTrack) = &currentTrack {
         Some(currentTrack.get_info().await?)
@@ -54,10 +60,14 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
             if let Some(trackStatus) = &trackStatus {
                 if let PlayMode::Pause = trackStatus.playing {
                     trackQueue.modify_queue(|queue| queue.remove(0));
-                };
+                }
             }
         } else if let None = &currentTrack {
             currentTrack = trackQueue.current();
+
+            if let Some(track) = &currentTrack {
+                botFunctions::sendTrackInfo(&ctx,&msg,track).await;
+            }
 
             trackStatus = if let Some(currentTrack) = &currentTrack {
                 Some(currentTrack.get_info().await?)
@@ -67,7 +77,7 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
         }
 
         break_ = msg.content[..].starts_with("-play") || msg.content[..].starts_with("-pause") || 
-                 msg.content[..].starts_with("-skip") || msg.content[..].starts_with("-stop");
+                msg.content[..].starts_with("-skip") || msg.content[..].starts_with("-stop");
 
         if break_ {
             break;
@@ -86,8 +96,6 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
-            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
-
             return Ok(());
         },
     };
@@ -185,7 +193,6 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
         },
     };
     
-
     let mut handler = handlerLock.lock().await;
 
     let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
@@ -198,8 +205,6 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
     trackQueue.skip()?;
 
     trackQueue.modify_queue(|queue| {
-        println!("firstTrack {:?}",queue);
-
         queue.remove(0); // remove the skipped track
     });
 

@@ -13,12 +13,14 @@ use songbird::{
     },
 };
 
-pub async fn getSource(ctx: &Context, msg: &Message, trackName:&str) -> CommandResult<Option<Input>> {
+pub async fn getSource<'a>(ctx:&Context, msg:&Message, trackName:&str) -> CommandResult<Option<Input>> {
     let source:Input;
 
     if  trackName.starts_with("https") || trackName.starts_with("http") {
         source = match ytdl(&trackName).await { //gets the track from youtube by the url
-            Ok(input) => input,
+            Ok(input) => { 
+                input
+            },
             Err(why) => {
                 println!("Err starting source: {:?}", why);
 
@@ -29,7 +31,9 @@ pub async fn getSource(ctx: &Context, msg: &Message, trackName:&str) -> CommandR
         };
     }else {
         source = match ytdl_search(&trackName).await { //gets the track from youtube by the song's name
-            Ok(input) => input,
+            Ok(input) =>    { 
+                input
+            },
             Err(why) => {
                 println!("Err starting source: {:?}", why);
 
@@ -42,7 +46,3 @@ pub async fn getSource(ctx: &Context, msg: &Message, trackName:&str) -> CommandR
 
     Ok(Some(source))
 } 
-
-pub fn getTrackInfo(ctx: &Context, msg: &Message) {
-
-}

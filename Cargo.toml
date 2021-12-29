@@ -10,4 +10,6 @@ serenity = { version = "0.10.9", default-features = false, features = ["cache","
 songbird = { version = "0.2.0", features = ["builtin-queue"]}
 tokio = { version = "1.0", features = ["macros","rt-multi-thread"] }
 dotenv = { version = "0.15.0"}
+chrono = "0.4.19"
+rand = "0.8.4"
 
