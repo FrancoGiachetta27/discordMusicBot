@@ -11,7 +11,8 @@ use serenity::{
 };
 use songbird::{
     SerenityInit,
-    tracks::{PlayMode, TrackState, TrackQueue, TrackHandle},
+    Call,
+    tracks::{TrackHandle},
 };
 
 // makes the bot join the channel where the message's author is, if not in any channel it won't work 

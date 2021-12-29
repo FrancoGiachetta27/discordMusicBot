@@ -21,7 +21,7 @@ mod queue;
 struct Handler;
 // struct VoiceManager; 
 #[group]
-#[commands(play,pause,resume,stop,skip)]
+#[commands(play,pause,resume,stop,skip,toloop,endloop)]
 struct General;
 
 #[async_trait] 
@@ -79,7 +79,7 @@ async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::resume(ctx, msg).await?;
+    musicBot::resume(&ctx, &msg).await?;
 
     Ok(())
 }
@@ -94,9 +94,22 @@ async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::skip(ctx, msg).await?;
+    musicBot::skip(&ctx, &msg).await?;
 
     Ok(())
 }
 
+#[command]
+async fn toloop(ctx: &Context, msg: &Message) -> CommandResult {
+    musicBot::toLoop(&ctx, &msg).await?;
+
+    Ok(())
+}
+
+#[command]
+async fn endloop(ctx: &Context, msg: &Message) -> CommandResult {
+    musicBot::endLoop(&ctx, &msg).await?;
+
+    Ok(())
+}
 
