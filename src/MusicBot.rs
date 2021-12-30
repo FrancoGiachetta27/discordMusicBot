@@ -2,7 +2,6 @@ use rand::Rng;
 use serenity::{
     model::{channel::Message},
     utils::Colour,
-    prelude::*,
     client::Context,
     framework::standard::{
         CommandResult,
@@ -17,7 +16,6 @@ use crate::botFunctions;
 
 //play a track
 pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> CommandResult {
-    let mut break_:bool = false;
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client

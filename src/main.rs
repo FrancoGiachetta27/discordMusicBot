@@ -4,7 +4,7 @@ use serenity:: {
     async_trait,
     model::{channel::{Message}, gateway::{Ready}},
     framework::standard::{
-        macros::{check, command, group, help, hook},
+        macros::{command, group},
         CommandResult,
         StandardFramework,
     },
@@ -21,14 +21,14 @@ mod queue;
 struct Handler;
 // struct VoiceManager; 
 #[group]
-#[commands(play,pause,resume,stop,skip,toloop,endloop)]
+#[commands(play,pause,resume,stop,skip,toloop,endloop,help,config)]
 struct General;
 
 #[async_trait] 
 // functions related to event_handler
 impl EventHandler for Handler {
     async fn message(&self, ctx:Context, msg: Message) {
-    
+        
     }
 
     async fn ready(&self, ctx:Context, ready:Ready) {
@@ -112,4 +112,38 @@ async fn endloop(ctx: &Context, msg: &Message) -> CommandResult {
 
     Ok(())
 }
+
+#[command]
+async fn help(ctx: &Context, msg: &Message) -> CommandResult {
+   match msg.channel_id.send_message(&ctx.http, |m| {
+        m.embed(|e| {
+            e.fields(vec![
+                ("👨‍💻 Comandos:", "", true),
+                ("-play", "reproducir canciones", true),
+                ("-pause:", "pausa una cacion", true),
+                ("-stop", "frena definitivamente una cancion", true),
+                ("-resume", "reanuda una cancion pausada", true),
+                ("-skip", "saltea una cacion", true),
+                ("-toloop", "repetir la cancion infinitamente", true),
+                ("-endloop", "frena la repeticion", true),
+                ("-config","entrar en la configuracion del bot",true)
+            ])
+        })
+    }).await {
+        Ok(ok) => (),
+        Err(why) => {
+            println!("Error {}", why);
+            
+            return Ok(());
+        }
+    };
+
+    Ok(())
+}
+
+#[command]
+async fn config(ctx: &Context, msg: &Message) -> CommandResult { 
+    
+    Ok(())
+} 
 

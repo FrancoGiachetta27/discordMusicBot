@@ -3,7 +3,6 @@ use chrono::Duration;
 use serenity::{
     model::{channel::Message},
     utils::Colour,
-    prelude::*,
     client::Context,
     framework::standard::{
         CommandResult,
