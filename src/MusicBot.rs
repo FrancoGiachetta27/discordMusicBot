@@ -15,12 +15,13 @@ use crate::queue;
 use crate::botFunctions;
 
 //play a track
-pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> CommandResult {
+pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList:Option<&str>) -> CommandResult {
+    let mut break_ = false;
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
     let mut break_:bool = false;
-    
+
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
@@ -32,25 +33,25 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,trackName,&mut handler).await? {
+    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,trackName,playList,&mut handler,).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
         }
     };
-    
+
     let mut currentTrack:Option<TrackHandle> = trackQueue.current();
-    
+
     if let Some(track) = &currentTrack {
         botFunctions::sendTrackInfo(&ctx,&msg,track).await;
     }
-        
+
     let mut trackStatus:Option<TrackState> = if let Some(currentTrack) = &currentTrack {
         Some(currentTrack.get_info().await?)
     }else{
         return Ok(());
     };
-        
+
     while !trackQueue.is_empty(){
         if let Some(currentTrack) = &currentTrack {
             currentTrack.play()?;
@@ -73,15 +74,22 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>) -> Comma
             };
         }
 
-        break_ = msg.content[..].starts_with("-play") 
-                || msg.content[..].starts_with("-pause") 
-                || msg.content[..].starts_with("-skip") 
+        break_ = msg.content[..].starts_with("-play")
+                || msg.content[..].starts_with("-pause")
+                || msg.content[..].starts_with("-skip")
                 || msg.content[..].starts_with("-stop");
 
         if break_ { break }
     }
 
     if trackQueue.is_empty() {
+        msg.channel_id.send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.field("La lista de canciones a finalizado, me las piro!","", true)
+            })
+        }).await.expect("Couldn't send the message");
+
+        // add style to the message
         botFunctions::leave(&ctx,&msg).await?;
     }
 
@@ -93,7 +101,7 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-    
+
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
@@ -105,7 +113,7 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+    let trackQueue = match queue::queue(ctx,msg,None,None,&mut handler).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
@@ -122,7 +130,7 @@ pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-    
+
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
@@ -133,8 +141,23 @@ pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
     };
 
     let mut handler = handlerLock.lock().await;
-    
-    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+
+    let guild = msg.guild(&ctx.cache).await.unwrap();
+    let guildId = guild.id;
+    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
+
+    let handlerLock = match manager.get(guildId) {
+        Some(handler) => handler,
+        None => {
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
+
+            return Ok(());
+        },
+    };
+
+    let mut handler = handlerLock.lock().await;
+
+    let trackQueue = match queue::queue(ctx,msg,None,None,&mut handler).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
@@ -151,7 +174,7 @@ pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-    
+
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
@@ -162,8 +185,8 @@ pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
     };
 
     let mut handler = handlerLock.lock().await;
-    
-    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+
+    let trackQueue = match queue::queue(ctx,msg,None,None,&mut handler).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
@@ -177,7 +200,7 @@ pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
         None => {
             msg.reply(&ctx.http, "❌ | No hay mas canciones para reproducir").await?;
         }
-    } 
+    }
 
     Ok(())
 }
@@ -187,7 +210,7 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-    
+
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
@@ -199,7 +222,7 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+    let trackQueue = match queue::queue(ctx,msg,None,None,&mut handler).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
@@ -223,7 +246,7 @@ pub async fn toLoop(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-    
+
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
@@ -234,8 +257,8 @@ pub async fn toLoop(ctx: &Context, msg: &Message) -> CommandResult {
     };
 
     let mut handler = handlerLock.lock().await;
-   
-    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+
+    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,None,None,&mut handler).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
@@ -275,7 +298,7 @@ pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-    
+
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
@@ -286,8 +309,8 @@ pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
     };
 
     let mut handler = handlerLock.lock().await;
-    
-    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,None,&mut handler).await? {
+
+    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,None,None,&mut handler).await? {
         Some(queue) => queue,
         None => {
             return Ok(());
@@ -316,3 +339,5 @@ pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
 
     Ok(())
 }
+
+

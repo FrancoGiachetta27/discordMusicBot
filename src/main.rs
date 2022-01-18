@@ -1,7 +1,9 @@
 use dotenv;
+use rand::Rng;
 use std::env;
 use serenity:: {
     async_trait,
+    utils::Colour,
     model::{channel::{Message}, gateway::{Ready}},
     framework::standard::{
         macros::{command, group},
@@ -17,18 +19,19 @@ mod stringToVector;
 mod musicBot;
 mod youtube;
 mod queue;
+mod spotify;
 
 struct Handler;
-// struct VoiceManager; 
+// struct VoiceManager;
 #[group]
-#[commands(play,pause,resume,stop,skip,toloop,endloop,help,config)]
+#[commands(play,pause,resume,stop,skip,toloop,endloop,help,config,queue,playlist)]
 struct General;
 
-#[async_trait] 
+#[async_trait]
 // functions related to event_handler
 impl EventHandler for Handler {
     async fn message(&self, ctx:Context, msg: Message) {
-        
+
     }
 
     async fn ready(&self, ctx:Context, ready:Ready) {
@@ -39,6 +42,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().expect(".env file not found");
+
     let token:String =  match env::var("TOKEN") {
         Ok(val) => val,
         Err(why) => panic!("{}", why)
@@ -48,15 +52,14 @@ async fn main() {
         .group(&GENERAL_GROUP)
         .configure(|c| c.with_whitespace(false).prefix("-"));
 
-    let mut client = Client::builder(token).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
-    
+    let mut client = Client::builder(&token).framework(framemwork).event_handler(Handler).register_songbird().await.expect("Error when creating client");
+
     if let Err(why) = client.start().await {
         print!("Client Error {:?}", why);
     }
 }
 
-// functions which are called when a command is sent. For example: -play.....
-
+// functions which are called when a command is sent. For example: -play....
 #[command]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     let trackName:Vec<&str> = stringToVector::convert(&msg.content[..]);
@@ -64,9 +67,9 @@ async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     botFunctions::join(&ctx, &msg).await?;
 
     if trackName.len() == 2 {
-        musicBot::play(&ctx,&msg,Some(trackName[1])).await?;
+        musicBot::play(&ctx,&msg,Some(trackName[1]),None).await?;
     }
-    
+
     Ok(())
 }
 
@@ -88,7 +91,7 @@ async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
     musicBot::stop(&ctx,&msg).await?;
     botFunctions::leave(&ctx,&msg).await?;
-    
+
     Ok(())
 }
 
@@ -115,10 +118,10 @@ async fn endloop(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn help(ctx: &Context, msg: &Message) -> CommandResult {
-   match msg.channel_id.send_message(&ctx.http, |m| {
+    msg.channel_id.send_message(&ctx.http, |m| {
         m.embed(|e| {
             e.fields(vec![
-                ("👨‍💻 Comandos:", "", true),
+                ("Comandos:", "", true),
                 ("-play", "reproducir canciones", true),
                 ("-pause:", "pausa una cacion", true),
                 ("-stop", "frena definitivamente una cancion", true),
@@ -128,22 +131,38 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
                 ("-endloop", "frena la repeticion", true),
                 ("-config","entrar en la configuracion del bot",true)
             ])
-        })
-    }).await {
-        Ok(ok) => (),
-        Err(why) => {
-            println!("Error {}", why);
-            
-            return Ok(());
-        }
-    };
+            .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
+        });
+
+        m
+    }).await.expect("Coudln't send the message");
+
+    println!("{}", msg.channel_id);
 
     Ok(())
 }
 
 #[command]
-async fn config(ctx: &Context, msg: &Message) -> CommandResult { 
-    
-    Ok(())
-} 
+async fn config(ctx: &Context, msg: &Message) -> CommandResult {
 
+    Ok(())
+}
+
+#[command]
+async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
+    queue::showQueueList(ctx, msg).await?;
+
+    Ok(())
+}
+
+#[command]
+async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
+    let playListName:Vec<&str> = stringToVector::convert(&msg.content[..]);
+
+    botFunctions::join(&ctx, &msg).await?;
+
+    if playListName.len() == 2 {
+        musicBot::play(&ctx,&msg,None,Some(playListName[1])).await?;
+    }
+    Ok(())
+}

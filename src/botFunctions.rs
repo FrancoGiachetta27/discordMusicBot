@@ -9,12 +9,10 @@ use serenity::{
     }
 };
 use songbird::{
-    SerenityInit,
-    Call,
     tracks::{TrackHandle},
 };
 
-// makes the bot join the channel where the message's author is, if not in any channel it won't work 
+// makes the bot join the channel where the message's author is, if not in any channel it won't work
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = &msg.guild(&ctx.cache).await.unwrap(); // gets an instance of the server where the bot is in
     let guildId = guild.id;
@@ -64,7 +62,7 @@ pub async fn sendTrackInfo(ctx: &Context, msg: &Message, track:&TrackHandle) {
                 Some(name) => &name[..],
                 None => ""
             };
-            
+
             let duration = match track.metadata().duration {
                 Some(duration) => Duration::from_std(duration).unwrap(),
                 None => Duration::zero()
@@ -73,7 +71,7 @@ pub async fn sendTrackInfo(ctx: &Context, msg: &Message, track:&TrackHandle) {
             e.fields(vec![
                 ("🎵 Reproduciendo:",name,false),
                 ("Solicitado por:",&msg.author.name,true),
-                ("⌚ Duracion:",&format!("{} minutes",Duration::num_minutes(&duration)),true)    
+                ("⌚ Duracion:",&format!("{} minutes",Duration::num_minutes(&duration)),true)
             ])
             .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
         });
