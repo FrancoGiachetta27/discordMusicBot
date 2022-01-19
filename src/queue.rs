@@ -1,6 +1,4 @@
 use rand::Rng;
-use rspotify::model::playlist;
-
 use serenity::{
     model::{channel::Message},
     client::Context,
@@ -43,8 +41,7 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, playL
         handler.enqueue_source(source);
     }else if let Some(name) = playListName {
         let playListResult = spotify::getPlayList(ctx,msg,name).await?;
-        let mut playListSongs:Vec<(String,String,bool)> = Vec::new();
-        
+
         for track in playListResult.as_ref().unwrap().tracks.items.iter() {
             match track.track.as_ref().unwrap() {
                 PlayableItem::Track(t) => {
@@ -54,22 +51,10 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, playL
                     };
 
                     handler.enqueue_source(source);
-
-                    playListSongs.push((".".to_string(),t.name.to_owned(),false));
                 }
                 _ => { return Ok(None); }
             }
         }
-
-        msg.channel_id.send_message(&ctx.http, |m| {
-                m.embed(|e| {
-                    e.field("🎸 PlayList:", playListResult.unwrap().name, true)
-                    .fields(
-                        playListSongs
-                    )
-                    .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
-                })
-        }).await.expect("Coudln't send the message");
     }
 
     Ok(Some(handler.queue()))
