@@ -55,6 +55,7 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList
     while !trackQueue.is_empty(){
         if let Some(currentTrack) = &currentTrack {
             currentTrack.play()?;
+
             if let Some(trackStatus) = &trackStatus {
                 if let PlayMode::Pause = trackStatus.playing {
                     trackQueue.modify_queue(|queue| queue.remove(0));
@@ -74,7 +75,7 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList
             };
         }
 
-        break_ = msg.content[..].starts_with("-play")
+        break_ = msg.content[..].starts_with("-p")
                 || msg.content[..].starts_with("-pause")
                 || msg.content[..].starts_with("-skip")
                 || msg.content[..].starts_with("-stop");
@@ -127,21 +128,6 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
 
 //pauses the current track
 pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
-        None => {
-            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
-
-            return Ok(());
-        },
-    };
-
-    let mut handler = handlerLock.lock().await;
-
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
