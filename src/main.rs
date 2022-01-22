@@ -120,7 +120,7 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
         m.embed(|e| {
             e.field("👨‍💻 Comandos:",".",true)
             .fields(vec![
-                ("⏯️  -play", "reproducir canciones", false),
+                ("⏯️  -p", "reproducir canciones", false),
                 ("🛑  -pause:", "pausa una cacion", false),
                 ("🛑  -stop", "frena definitivamente una cancion", false),
                 ("⏯️  -resume", "reanuda una cancion pausada", false),

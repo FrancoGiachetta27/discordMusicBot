@@ -325,5 +325,3 @@ pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
 
     Ok(())
 }
-
-

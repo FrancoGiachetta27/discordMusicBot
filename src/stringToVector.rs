@@ -34,4 +34,3 @@ pub fn getConfig(msg:&str) -> Vec<&str> {
 
     return stringVector;
 }
-
