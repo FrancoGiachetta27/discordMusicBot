@@ -12,10 +12,14 @@ use serenity:: {
     },
     prelude::*,
 };
-use songbird::SerenityInit;
+use songbird::{
+    SerenityInit,
+    tracks::{TrackHandle,TrackQueue},
+};
 
 mod botFunctions;
 mod stringToVector;
+mod geniusLyrics;
 mod musicBot;
 mod youtube;
 mod queue;
@@ -24,7 +28,7 @@ mod spotify;
 struct Handler;
 // struct VoiceManager;
 #[group]
-#[commands(play,pause,resume,stop,skip,toloop,endloop,help,config,queue,playlist)]
+#[commands(play,pause,resume,stop,skip,toloop,endloop,help,config,queue,playlist,lyrics)]
 struct General;
 
 #[async_trait]
@@ -121,14 +125,15 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
             e.field("👨‍💻 Comandos:",".",true)
             .fields(vec![
                 ("⏯️  -p", "reproducir canciones", false),
-                ("🛑  -pause:", "pausa una cacion", false),
-                ("🛑  -stop", "frena definitivamente una cancion", false),
-                ("⏯️  -resume", "reanuda una cancion pausada", false),
-                ("⏭️  -skip", "saltea una cacion", false),
-                ("🔁  -toloop", "repetir la cancion infinitamente", false),
-                ("🔁  -endloop", "frena la repeticion", false),
+                ("🛑  -pause:", "pausar una cancion", false),
+                ("🛑  -stop", "frenar definitivamente una cancion", false),
+                ("⏯️  -resume", "reanudar una cancion pausada", false),
+                ("⏭️  -skip", "saltear una cacion", false),
+                ("♾️  -toloop", "repetir la cancion infinitamente", false),
+                ("🔁  -endloop", "frenar la repeticion", false),
                 ("💻  -config", "entrar en la configuracion del bot", false),
                 ("⏯️  -playlist", "reproducir una playlist de spotify", false),
+                ("📜  -lyrics", "obtener la letra de la cancion que se esta reproducioendo", false),
             ])
             .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
         })
@@ -164,7 +169,7 @@ async fn config(ctx: &Context, msg: &Message) -> CommandResult {
 
     msg.channel_id.say(&ctx.http,format!("{}",env::var("PREFIX").unwrap())).await?;
 
-    
+
     Ok(())
 }
 
@@ -183,6 +188,38 @@ async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
 
     if playListName.len() == 2 {
         musicBot::play(&ctx,&msg,None,Some(playListName[1])).await?;
+    }
+    Ok(())
+}
+
+#[command]
+async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
+    let guild = msg.guild(&ctx.cache).await.unwrap();
+    let guildId = guild.id;
+    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
+
+    let handlerLock = match manager.get(guildId) {
+        Some(handler) => handler,
+        None => {
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
+
+            return Ok(());
+        },
+    };
+
+    let mut handler = handlerLock.lock().await;
+
+    let trackQueue: &TrackQueue = match queue::queue(ctx,msg,None,None,&mut handler,).await? {
+        Some(queue) => queue,
+        None => {
+            return Ok(());
+        }
+    };
+
+    let currentTrack:Option<TrackHandle> = trackQueue.current();
+
+    if let Some(track) = currentTrack {
+       geniusLyrics::getLyrics(&ctx,&msg,&mut track.metadata().title.as_ref().unwrap().as_str()).await?;
     }
     Ok(())
 }

@@ -42,8 +42,8 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList
 
     let mut currentTrack:Option<TrackHandle> = trackQueue.current();
 
-    if let Some(track) = &currentTrack {
-        botFunctions::sendTrackInfo(&ctx,&msg,track).await;
+    if let Some(currentTrack) = &currentTrack {
+        botFunctions::sendTrackInfo(&ctx,&msg,currentTrack).await;
     }
 
     let mut trackStatus:Option<TrackState> = if let Some(currentTrack) = &currentTrack {
@@ -52,27 +52,9 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList
         return Ok(());
     };
 
-    while !trackQueue.is_empty(){
+    while !trackQueue.is_empty() {
         if let Some(currentTrack) = &currentTrack {
             currentTrack.play()?;
-
-            if let Some(trackStatus) = &trackStatus {
-                if let PlayMode::Pause = trackStatus.playing {
-                    trackQueue.modify_queue(|queue| queue.remove(0));
-                }
-            }
-        } else if let None = &currentTrack {
-            currentTrack = trackQueue.current();
-
-            if let Some(track) = &currentTrack {
-                botFunctions::sendTrackInfo(&ctx,&msg,track).await;
-            }
-
-            trackStatus = if let Some(currentTrack) = &currentTrack {
-                Some(currentTrack.get_info().await?)
-            }else{
-                return Ok(());
-            };
         }
 
         break_ = msg.content[..].starts_with("-p")
@@ -81,17 +63,6 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList
                 || msg.content[..].starts_with("-stop");
 
         if break_ { break }
-    }
-
-    if trackQueue.is_empty() {
-        msg.channel_id.send_message(&ctx.http, |m| {
-            m.embed(|e| {
-                e.field("La lista de canciones a finalizado, me las piro!","", true)
-            })
-        }).await.expect("Couldn't send the message");
-
-        // add style to the message
-        botFunctions::leave(&ctx,&msg).await?;
     }
 
     Ok(())

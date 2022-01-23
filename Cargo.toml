@@ -13,3 +13,5 @@ dotenv = { version = "0.15.0"}
 chrono = "0.4.19"
 rand = "0.8.4"
 rspotify = { version = "0.11.3", features = ["client-ureq", "ureq-rustls-tls"], default-features = false }
+genius-rs = "0.4.0"
+genius_lyrics = "1.0.2"
