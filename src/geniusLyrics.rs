@@ -36,10 +36,8 @@ pub async fn getLyrics(ctx: &Context, msg: &Message, mut trackName: &str) -> Com
         let mut count = 0;
         let mut tackLyrics:Vec<(&str,&str,bool)> = Vec::new();
 
-        println!("{} \n",&lyrics);
-
         for (i,word) in lyrics.bytes().enumerate() {
-            if i == 1020 || i == 2040 || i == 3060 || i == 4080 {
+            if i == 1020 || i == 2040 || i == 3060 || i == 4080 ||  i == 5100 ||  i == 6120 ||  i == 7140{
                 tackLyrics.push(("-", &lyrics[count..i],false));
 
                 count = i;

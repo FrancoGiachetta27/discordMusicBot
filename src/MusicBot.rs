@@ -42,11 +42,7 @@ pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList
 
     let mut currentTrack:Option<TrackHandle> = trackQueue.current();
 
-    if let Some(currentTrack) = &currentTrack {
-        botFunctions::sendTrackInfo(&ctx,&msg,currentTrack).await;
-    }
-
-    let mut trackStatus:Option<TrackState> = if let Some(currentTrack) = &currentTrack {
+    let trackStatus:Option<TrackState> = if let Some(currentTrack) = &currentTrack {
         Some(currentTrack.get_info().await?)
     }else{
         return Ok(());

@@ -1,4 +1,5 @@
 use rand::Rng;
+use chrono::Duration;
 use serenity::{
     model::{channel::Message},
     client::Context,
@@ -28,9 +29,18 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, playL
         };
 
         if let Some(name) = &source.metadata.title {
+            let duration = match &source.metadata.duration {
+                Some(duration) => Duration::from_std(duration.to_owned()).unwrap(),
+                None => Duration::zero()
+            };
+
             msg.channel_id.send_message(&ctx.http, |m| {
                 m.embed(|e| {
-                    e.field("🎙️ Se ha añadido una cancion a la lista de canciones:", name, true)
+                    e.fields(vec![
+                        ("🎙️ Se ha añadido una cancion a la lista de canciones:", name, false),
+                        ("Solicitado por:",&msg.author.name,true),
+                        ("⌚ Duracion:",&format!("   {} minutes",Duration::num_minutes(&duration)),true)
+                    ])
                      .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
                 });
 
