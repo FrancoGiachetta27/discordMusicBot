@@ -1,6 +1,8 @@
 use rand::Rng;
 use serenity::{
-    model::{channel::Message},
+    model::{
+        channel::Message
+    },
     utils::Colour,
     client::Context,
     framework::standard::{
@@ -8,11 +10,10 @@ use serenity::{
     }
 };
 use songbird::{
-    tracks::{PlayMode, TrackState, TrackQueue, TrackHandle},
+    tracks::{TrackState, TrackQueue, TrackHandle},
 };
 
 use crate::queue;
-use crate::botFunctions;
 
 //play a track
 pub async fn play(ctx: &Context, msg: &Message, trackName:Option<&str>, playList:Option<&str>) -> CommandResult {

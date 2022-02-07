@@ -1,5 +1,7 @@
 use serenity::{
-    model::{channel::Message},
+    model::{
+        channel::Message
+    },
     client::Context,
     framework::standard::{
         CommandResult,
@@ -13,6 +15,7 @@ use songbird::{
     },
 };
 
+// gets the source of the track from youtube and returns it
 pub async fn getSource<'a>(ctx:&Context, msg:&Message, trackName:&str) -> CommandResult<Option<Input>> {
     let source:Input;
 

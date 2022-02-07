@@ -15,7 +15,6 @@ use songbird::{
 use rspotify::{
     model::{
         PlayableItem,
-        PlaylistItem,
     },
 };
 use crate::{youtube, spotify, playlist};
@@ -39,7 +38,7 @@ pub async fn queue<'a>(ctx:&Context, msg:&Message, trackName:Option<&str>, playL
                     e.fields(vec![
                         ("🎙️ Se ha añadido una cancion a la lista de canciones:", name, false),
                         ("Solicitado por:",&msg.author.name,true),
-                        ("⌚ Duracion:",&format!("   {} minutes",Duration::num_minutes(&duration)),true)
+                        ("⌚ Duracion:",&format!("{} minutes",Duration::num_minutes(&duration)),true)
                     ])
                      .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
                 });

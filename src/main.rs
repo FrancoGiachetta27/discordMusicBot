@@ -4,9 +4,14 @@ use std::env;
 use serenity:: {
     async_trait,
     utils::Colour,
-    model::{channel::{Message}, gateway::{Ready}},
+    model::{ 
+        id::ChannelId, 
+        guild::GuildStatus, 
+        channel::Message, 
+        gateway::Ready  
+    },
     framework::standard::{
-        macros::{command, group},
+        macros::{ command, group },
         CommandResult,
         StandardFramework,
     },
@@ -14,7 +19,7 @@ use serenity:: {
 };
 use songbird::{
     SerenityInit,
-    tracks::{TrackHandle,TrackQueue},
+    tracks::{ TrackHandle,TrackQueue },
 };
 
 mod botFunctions;
@@ -34,12 +39,30 @@ struct General;
 #[async_trait]
 // functions related to event_handler
 impl EventHandler for Handler {
-    async fn message(&self, ctx:Context, msg: Message) {
-
-    }
+    async fn message(&self, ctx:Context, msg: Message) {}
 
     async fn ready(&self, ctx:Context, ready:Ready) {
-        println!("{} is connected!", ready.user.name);
+        println!("the DiscordBot is ready");
+
+        for guild in ready.guilds.iter() {
+    
+            match guild {
+                GuildStatus::Offline(guild) => {
+                    if format!("{}", guild.id.0) == env::var("GUILD_ID").unwrap() {
+                        let channels = guild.id.channels(&ctx.http).await.unwrap();
+
+                        channels.get(&ChannelId(env::var("CHANNEL_ID").unwrap().parse().unwrap())).unwrap()
+                        .send_message(&ctx.http,|m| {
+                            m.embed(|e| {
+                                e.field("Hola 👋", "Toy ready", true)
+                                .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
+                            })
+                        }).await.unwrap();
+                    }
+                }
+                _ => {}
+            }
+        }
     }
 }
 

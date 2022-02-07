@@ -12,7 +12,9 @@ use rspotify::{
 };
 use rand::Rng;
 use serenity::{
-    model::{channel::Message},
+    model::{
+        channel::Message
+    },
     client::Context,
     utils::Colour,
 };

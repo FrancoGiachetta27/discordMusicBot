@@ -3,7 +3,7 @@ use rand::Rng;
 use std::env;
 use serenity:: {
     utils::Colour,
-    model::{channel::{Message}, gateway::{Ready}},
+    model::{channel::{Message}},
     framework::standard::{
         CommandResult,
     },
@@ -48,7 +48,7 @@ pub async fn getLyrics(ctx: &Context, msg: &Message, mut trackName: &str) -> Com
 
         msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
-                e.field(format!("🎶 {} ", trackName), "--------------------------------------------------------------", false)
+                e.field(format!("🎸 {} ", trackName), "--------------------------------------------------------------", false)
                 .fields(
                     tackLyrics
                 )

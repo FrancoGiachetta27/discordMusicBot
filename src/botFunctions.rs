@@ -8,9 +8,6 @@ use serenity::{
         CommandResult,
     }
 };
-use songbird::{
-    tracks::{TrackHandle},
-};
 
 // makes the bot join the channel where the message's author is, if not in any channel it won't work
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
@@ -53,29 +50,29 @@ pub async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
     Ok(())
 }
 
-pub async fn sendTrackInfo(ctx: &Context, msg: &Message, track:&TrackHandle) {
-    msg.channel_id.send_message(&ctx.http, |m| {
+// pub async fn sendTrackInfo(ctx: &Context, msg: &Message, track:&TrackHandle) {
+//     msg.channel_id.send_message(&ctx.http, |m| {
 
-        // add style to the message
-        m.embed(|e| {
-            let name = match &track.metadata().title {
-                Some(name) => &name[..],
-                None => ""
-            };
+//         // add style to the message
+//         m.embed(|e| {
+//             let name = match &track.metadata().title {
+//                 Some(name) => &name[..],
+//                 None => ""
+//             };
 
-            let duration = match track.metadata().duration {
-                Some(duration) => Duration::from_std(duration).unwrap(),
-                None => Duration::zero()
-            };
+//             let duration = match track.metadata().duration {
+//                 Some(duration) => Duration::from_std(duration).unwrap(),
+//                 None => Duration::zero()
+//             };
 
-            e.fields(vec![
-                ("🎵 Reproduciendo:",name,false),
-                ("Solicitado por:",&msg.author.name,true),
-                ("⌚ Duracion:",&format!("{} minutes",Duration::num_minutes(&duration)),true)
-            ])
-            .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
-        });
+//             e.fields(vec![
+//                 ("🎵 Reproduciendo:",name,false),
+//                 ("Solicitado por:",&msg.author.name,true),
+//                 ("⌚ Duracion:",&format!("{} minutes",Duration::num_minutes(&duration)),true)
+//             ])
+//             .colour(Colour::from_rgb(rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255), rand::thread_rng().gen_range(0..255)))
+//         });
 
-        m
-    }).await.expect("Coudln't send the message");
-}
+//         m
+//     }).await.expect("Coudln't send the message");
+// }
