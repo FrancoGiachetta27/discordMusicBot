@@ -168,11 +168,7 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
                         ("🔁  -endloop", "frenar la repeticion", false),
                         ("💻  -config", "entrar en la configuracion del bot", false),
                         ("⏯️  -playlist", "reproducir una playlist de spotify", false),
-                        (
-                            "📜  -lyrics",
-                            "obtener la letra de la cancion que se esta reproducioendo",
-                            false,
-                        ),
+                        ("📜  -lyrics","obtener la letra de la cancion que se esta reproducioendo",false),
                     ])
                     .colour(Colour::from_rgb(
                         rand::thread_rng().gen_range(0..255),
@@ -181,8 +177,7 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
                     ))
             })
         })
-        .await
-        .unwrap();
+        .await.unwrap();
 
     Ok(())
 }
@@ -204,21 +199,17 @@ async fn config(ctx: &Context, msg: &Message) -> CommandResult {
                         ))
                 })
             })
-            .await
-            .unwrap();
+            .await.unwrap();
     } else if config.len() == 3 {
         match config[1] {
             "prefix" => env::set_var("PREFIX", config[2]),
             _ => {
-                msg.channel_id
-                    .say(&ctx.http, "❌ | Ese comando no es correcto")
-                    .await?;
+                msg.channel_id.say(&ctx.http, "❌ | Ese comando no es correcto").await?;
             }
         }
     } else {
         msg.channel_id
-            .say(&ctx.http, "❌ | Ese comando no es correcto")
-            .await?;
+            .say(&ctx.http, "❌ | Ese comando no es correcto").await?;
     }
 
     msg.channel_id
