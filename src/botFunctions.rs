@@ -1,32 +1,32 @@
-use rand::Rng;
 use chrono::Duration;
+use rand::Rng;
 use serenity::{
-    model::{channel::Message},
-    utils::Colour,
-    client::Context,
-    framework::standard::{
-        CommandResult,
-    }
+    client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
 };
 
 // makes the bot join the channel where the message's author is, if not in any channel it won't work
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = &msg.guild(&ctx.cache).await.unwrap(); // gets an instance of the server where the bot is in
     let guildId = guild.id;
-    let channelId = guild.voice_states.get(&msg.author.id).and_then(|voiceState| voiceState.channel_id); //gets the channel id where the message's author is
+    let channelId = guild
+        .voice_states
+        .get(&msg.author.id)
+        .and_then(|voiceState| voiceState.channel_id); //gets the channel id where the message's author is
 
     let connectTo = match channelId {
         Some(channel) => channel,
         None => {
-            msg.channel_id.say(&ctx.http, "❌ | No estas en un canal de voz").await?;
+            msg.channel_id
+                .say(&ctx.http, "❌ | No estas en un canal de voz")
+                .await?;
 
             return Ok(());
         }
     };
 
     let manager = songbird::get(&ctx).await.unwrap().clone(); //creates a voice client
-    if let (handler,Err(why)) = manager.join(guildId, connectTo).await {
-        println!("JoinError {}",why);
+    if let (handler, Err(why)) = manager.join(guildId, connectTo).await {
+        println!("JoinError {}", why);
     }
 
     Ok(())
@@ -41,7 +41,9 @@ pub async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
 
     if hasHandler {
         if let Err(why) = manager.remove(guildId).await {
-            msg.channel_id.say(&ctx.http, "❌ | Error al desconectar el bot").await?;
+            msg.channel_id
+                .say(&ctx.http, "❌ | Error al desconectar el bot")
+                .await?;
         }
 
         msg.channel_id.say(&ctx.http, "Bot desconectado").await?;
