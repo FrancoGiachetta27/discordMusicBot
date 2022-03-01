@@ -46,22 +46,24 @@ pub async fn getPlayList(
             }
         };
 
-        for track in playList.tracks.items.iter() {
-            match track.track.as_ref().unwrap() {
-                PlayableItem::Track(t) => {
-                    playListSongs.push((".".to_string(), t.name.to_owned(), true));
-                }
-                _ => {
-                    return Ok(None);
-                }
-            }
-        }
-
         msg.channel_id
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
                     e.field("🎸 PlayList:", &playList.name, true)
-                        .fields(playListSongs)
+                        .fields(
+                            playList
+                                .tracks
+                                .items
+                                .iter()
+                                .map(|track| -> (String, String, bool) {
+                                    if let PlayableItem::Track(t) = track.track.as_ref().unwrap() {
+                                        (".".to_string(), t.name.to_owned(), false)
+                                    } else {
+                                        (".".to_string(), "".to_string(), true)
+                                    }
+                                })
+                                .collect::<Vec<(String, String, bool)>>(),
+                        )
                         .colour(Colour::from_rgb(
                             rand::thread_rng().gen_range(0..255),
                             rand::thread_rng().gen_range(0..255),

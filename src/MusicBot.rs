@@ -104,8 +104,7 @@ pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
     let handlerLock = match manager.get(guildId) {
         Some(handler) => handler,
         None => {
-            msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
-                .await?;
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
 
             return Ok(());
         }

@@ -40,32 +40,32 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("the DiscordBot is ready");
 
-        for guild in ready.guilds.iter() {
-            match guild {
-                GuildStatus::Offline(guild) => {
-                    if format!("{}", guild.id.0) == env::var("GUILD_ID").unwrap() {
-                        let channels = guild.id.channels(&ctx.http).await.unwrap();
+        // for guild in ready.guilds.iter() {
+        //     match guild {
+        //         GuildStatus::Offline(guild) => {
+        //             if format!("{}", guild.id.0) == env::var("GUILD_ID").unwrap() {
+        //                 let channels = guild.id.channels(&ctx.http).await.unwrap();
 
-                        channels
-                            .get(&ChannelId(env::var("CHANNEL_ID").unwrap().parse().unwrap()))
-                            .unwrap()
-                            .send_message(&ctx.http, |m| {
-                                m.embed(|e| {
-                                    e.field("Hola 👋", "Toy ready", true)
-                                        .colour(Colour::from_rgb(
-                                            rand::thread_rng().gen_range(0..255),
-                                            rand::thread_rng().gen_range(0..255),
-                                            rand::thread_rng().gen_range(0..255),
-                                        ))
-                                })
-                            })
-                            .await
-                            .unwrap();
-                    }
-                }
-                _ => {}
-            }
-        }
+        //                 channels
+        //                     .get(&ChannelId(env::var("CHANNEL_ID").unwrap().parse().unwrap()))
+        //                     .unwrap()
+        //                     .send_message(&ctx.http, |m| {
+        //                         m.embed(|e| {
+        //                             e.field("Hola 👋", "Toy ready", true)
+        //                                 .colour(Colour::from_rgb(
+        //                                     rand::thread_rng().gen_range(0..255),
+        //                                     rand::thread_rng().gen_range(0..255),
+        //                                     rand::thread_rng().gen_range(0..255),
+        //                                 ))
+        //                         })
+        //                     })
+        //                     .await
+        //                     .unwrap();
+        //             }
+        //         }
+        //         _ => {}
+        //     }
+        // }
     }
 }
 
@@ -257,7 +257,7 @@ async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
         Some(handler) => handler,
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
-                .await?;
+            .await?;
 
             return Ok(());
         }

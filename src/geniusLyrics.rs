@@ -23,8 +23,8 @@ pub async fn getLyrics(ctx: &Context, msg: &Message, mut trackName: &str) -> Com
         Ok(lyrics) => lyrics,
         Err(why) => {
             msg.channel_id
-                .say(
-                    &ctx.http,
+                .say(   
+                    &ctx.http, 
                     "❌ | No se han podido encontrar las lyrics de esa cancion",
                 )
                 .await
@@ -37,7 +37,6 @@ pub async fn getLyrics(ctx: &Context, msg: &Message, mut trackName: &str) -> Com
         let mut count = 0;
         let mut tackLyrics: Vec<(&str, &str, bool)> = Vec::new();
 
-<<<<<<< HEAD
         for (i, word) in lyrics.bytes().enumerate() {
             if i == 1020
                 || i == 2040
@@ -48,11 +47,6 @@ pub async fn getLyrics(ctx: &Context, msg: &Message, mut trackName: &str) -> Com
                 || i == 7140
             {
                 tackLyrics.push(("-", &lyrics[count..i], false));
-=======
-        for (i,word) in lyrics.bytes().enumerate() {
-            if i == 1020 || i == 2040 || i == 3060 || i == 4080 ||  i == 5100 ||  i == 6120 ||  i == 7140 {
-                tackLyrics.push(("-", &lyrics[count..i],false));
->>>>>>> 1ea63f109cfd51b88f961109a0e2d7d05c1ead05
 
                 count = i;
             } else if i == lyrics.bytes().len() - 1 {

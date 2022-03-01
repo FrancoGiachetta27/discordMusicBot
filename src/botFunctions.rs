@@ -1,4 +1,3 @@
-use chrono::Duration;
 use rand::Rng;
 use serenity::{
     client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,

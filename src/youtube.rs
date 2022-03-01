@@ -31,7 +31,7 @@ pub async fn getSource<'a>(
                 println!("Err starting source: {:?}", why);
 
                 msg.channel_id
-                    .say(&ctx.http, "❌ | No se ha podido encontrar esa cancion")
+                    .say(&ctx.http, format!("❌ | Ha ocurrido un error al buscar '{}', puede ser por no ser encontrada o por restricción de edad", trackName))
                     .await?;
 
                 return Ok(None);

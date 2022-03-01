@@ -84,7 +84,7 @@ pub async fn queue<'a>(
     Ok(Some(handler.queue()))
 }
 
-// shows the list of track that are in the track qeue
+// shows the list of track that are in the track queue
 pub async fn showQueueList(ctx: &Context, msg: &Message) -> CommandResult {
     let mut queueList: Vec<(String, String, bool)> = Vec::new();
     let guild = msg.guild(&ctx.cache).await.unwrap();
