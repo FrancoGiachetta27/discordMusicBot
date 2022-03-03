@@ -23,8 +23,8 @@ pub async fn getLyrics(ctx: &Context, msg: &Message, mut trackName: &str) -> Com
         Ok(lyrics) => lyrics,
         Err(why) => {
             msg.channel_id
-                .say(   
-                    &ctx.http, 
+                .say(
+                    &ctx.http,
                     "❌ | No se han podido encontrar las lyrics de esa cancion",
                 )
                 .await

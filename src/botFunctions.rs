@@ -1,7 +1,5 @@
 use rand::Rng;
-use serenity::{
-    client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
-};
+use serenity::{client::Context, framework::standard::CommandResult, model::channel::Message};
 
 // makes the bot join the channel where the message's author is, if not in any channel it won't work
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
