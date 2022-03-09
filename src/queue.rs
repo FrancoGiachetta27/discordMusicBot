@@ -28,23 +28,33 @@ pub async fn queue<'a>(
                 Some(duration) => Duration::from_std(duration.to_owned()).unwrap(),
                 None => Duration::zero(),
             };
+            let url = &source.metadata.source_url.to_owned().unwrap();
+            let thumbnial = &source.metadata.thumbnail.to_owned().unwrap();
+            let artist = &source.metadata.artist.to_owned().unwrap();
+            let author = &msg
+                .author
+                .nick_in(&ctx.http, &msg.guild(&ctx.cache).await.unwrap().id)
+                .await
+                .unwrap();
 
             msg.channel_id
                 .send_message(&ctx.http, |m| {
                     m.embed(|e| {
-                        e.fields(vec![
-                            (
-                                "🎙️ Se ha añadido una cancion a la lista de canciones:",
-                                name,
-                                false,
-                            ),
-                            ("Solicitado por:", &msg.author.name, true),
+                        e.title(format!(
+                            "🎙️ Se ha añadido una cancion a la lista de canciones:\n {}",
+                            name
+                        ))
+                        .fields(vec![
+                            ("Autor: ", artist, true),
+                            ("Solicitado por:", author, true),
                             (
                                 "⌚ Duracion:",
                                 &format!("{} minutes", Duration::num_minutes(&duration)),
                                 true,
                             ),
                         ])
+                        .url(url)
+                        .thumbnail(thumbnial)
                         .colour(Colour::from_rgb(
                             rand::thread_rng().gen_range(0..255),
                             rand::thread_rng().gen_range(0..255),
