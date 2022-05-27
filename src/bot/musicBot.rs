@@ -1,8 +1,7 @@
-use rand::Rng;
-use serenity::{
-    client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
-};
+use serenity::{client::Context, framework::standard::CommandResult, model::channel::Message};
 use songbird::tracks::{TrackHandle, TrackQueue, TrackState};
+
+use crate::utils;
 
 use crate::queue;
 
@@ -13,14 +12,10 @@ pub async fn play(
     trackName: Option<&str>,
     playList: Option<&str>,
 ) -> CommandResult {
-    let mut break_ = false;
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
     let mut break_: bool = false;
 
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
+    let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
+        Some(handler) => handler.lock().await.clone(),
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
                 .await?;
@@ -28,8 +23,6 @@ pub async fn play(
             return Ok(());
         }
     };
-
-    let mut handler = handlerLock.lock().await;
 
     let trackQueue: &TrackQueue =
         match queue::queue(ctx, msg, trackName, playList, &mut handler).await? {
@@ -67,12 +60,8 @@ pub async fn play(
 
 //stop the track permanently
 pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
+    let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
+        Some(handler) => handler.lock().await.clone(),
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
                 .await?;
@@ -80,8 +69,6 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
             return Ok(());
         }
     };
-
-    let mut handler = handlerLock.lock().await;
 
     let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
         Some(queue) => queue,
@@ -97,20 +84,15 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
 
 //pauses the current track
 pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
+    let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
+        Some(handler) => handler.lock().await.clone(),
         None => {
-            msg.reply(&ctx.http, "❌ | No estas en un canal de voz").await?;
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
+                .await?;
 
             return Ok(());
         }
     };
-
-    let mut handler = handlerLock.lock().await;
 
     let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
         Some(queue) => queue,
@@ -126,12 +108,8 @@ pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
 
 //Unpauses a the current track
 pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
+    let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
+        Some(handler) => handler.lock().await.clone(),
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
                 .await?;
@@ -139,8 +117,6 @@ pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
             return Ok(());
         }
     };
-
-    let mut handler = handlerLock.lock().await;
 
     let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
         Some(queue) => queue,
@@ -164,12 +140,8 @@ pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
 
 //skips the current track
 pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
+    let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
+        Some(handler) => handler.lock().await.clone(),
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
                 .await?;
@@ -177,8 +149,6 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
             return Ok(());
         }
     };
-
-    let mut handler = handlerLock.lock().await;
 
     let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
         Some(queue) => queue,
@@ -201,12 +171,8 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 pub async fn toLoop(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
+    let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
+        Some(handler) => handler.lock().await.clone(),
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
                 .await?;
@@ -214,8 +180,6 @@ pub async fn toLoop(ctx: &Context, msg: &Message) -> CommandResult {
             return Ok(());
         }
     };
-
-    let mut handler = handlerLock.lock().await;
 
     let trackQueue: &TrackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
         Some(queue) => queue,
@@ -229,39 +193,18 @@ pub async fn toLoop(ctx: &Context, msg: &Message) -> CommandResult {
     if let Some(track) = currentTrack {
         match track.enable_loop() {
             Ok(ok) => {
-                msg.channel_id
-                    .send_message(&ctx.http, |m| {
-                        m.embed(|e| {
-                            e.field("🔁 Loop habilitado", "", true)
-                                .colour(Colour::from_rgb(
-                                    rand::thread_rng().gen_range(0..255),
-                                    rand::thread_rng().gen_range(0..255),
-                                    rand::thread_rng().gen_range(0..255),
-                                ))
-                        })
-                    })
-                    .await
-                    .expect("Coudln't send the message");
+                utils::sendMessageSingleLine("🔁 Loop habilitado", "", true, ctx, msg).await;
             }
             Err(why) => {
                 println!("Err {}", why);
-                msg.channel_id
-                    .send_message(&ctx.http, |m| {
-                        m.embed(|e| {
-                            e.field(
-                                "❌ Esta cancion no tiene la opcion 'loop' habilitada",
-                                "",
-                                true,
-                            )
-                            .colour(Colour::from_rgb(
-                                rand::thread_rng().gen_range(0..255),
-                                rand::thread_rng().gen_range(0..255),
-                                rand::thread_rng().gen_range(0..255),
-                            ))
-                        })
-                    })
-                    .await
-                    .expect("Coudln't send the message");
+                utils::sendMessageSingleLine(
+                    "❌ Esta cancion no tiene la opcion 'loop' habilitada",
+                    "",
+                    true,
+                    ctx,
+                    msg,
+                )
+                .await;
 
                 return Ok(());
             }
@@ -272,12 +215,8 @@ pub async fn toLoop(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
+    let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
+        Some(handler) => handler.lock().await.clone(),
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
                 .await?;
@@ -285,8 +224,6 @@ pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
             return Ok(());
         }
     };
-
-    let mut handler = handlerLock.lock().await;
 
     let trackQueue: &TrackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
         Some(queue) => queue,
@@ -300,19 +237,7 @@ pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
     if let Some(track) = currentTrack {
         match track.disable_loop() {
             Ok(ok) => {
-                msg.channel_id
-                    .send_message(&ctx.http, |m| {
-                        m.embed(|e| {
-                            e.field("🛑 Loop deshabilitado", "", true)
-                                .colour(Colour::from_rgb(
-                                    rand::thread_rng().gen_range(0..255),
-                                    rand::thread_rng().gen_range(0..255),
-                                    rand::thread_rng().gen_range(0..255),
-                                ))
-                        })
-                    })
-                    .await
-                    .expect("Coudln't send the message");
+                utils::sendMessageSingleLine("🛑 Loop deshabilitado", "", true, ctx, msg).await;
             }
             Err(why) => {
                 println!("Err {}", why);

@@ -1,4 +1,4 @@
-use crate::{playlist, spotify, youtube};
+use crate::sources::{spotify, youtube};
 use chrono::Duration;
 use rand::Rng;
 use rspotify::model::PlayableItem;
@@ -31,19 +31,13 @@ pub async fn queue<'a>(
             let url = &source.metadata.source_url.to_owned().unwrap();
             let thumbnial = &source.metadata.thumbnail.to_owned().unwrap();
             let artist = &source.metadata.artist.to_owned().unwrap();
-            let author = &msg
-                .author
-                .nick_in(&ctx.http, &msg.guild(&ctx.cache).await.unwrap().id)
-                .await
-                .unwrap();
+            let author = &msg.author.name;
 
             msg.channel_id
                 .send_message(&ctx.http, |m| {
                     m.embed(|e| {
-                        e.title(format!(
-                            "🎙️ Se ha añadido una cancion a la lista de canciones:\n {}",
-                            name
-                        ))
+                        e.title(name)
+                        .description("🎙️ Se ha añadido a la lista de canciones")
                         .fields(vec![
                             ("Autor: ", artist, true),
                             ("Solicitado por:", author, true),

@@ -18,7 +18,11 @@ pub async fn getLyrics(ctx: &Context, msg: &Message, mut trackName: &str) -> Com
         }
     }
 
-    let lyrics = match genius_lyrics::get_lyrics_from_url(&genius.search(&trackName).await.unwrap()[0].result.url).await {
+    let lyrics = match genius_lyrics::get_lyrics_from_url(
+        &genius.search(&trackName).await.unwrap()[0].result.url,
+    )
+    .await
+    {
         Ok(lyrics) => lyrics,
         Err(why) => {
             msg.channel_id

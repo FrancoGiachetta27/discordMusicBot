@@ -16,20 +16,20 @@ use songbird::{
 };
 use std::env;
 
-mod botFunctions;
+mod bot;
 mod geniusLyrics;
-mod musicBot;
-mod queue;
-mod spotify;
-mod stringToVector;
-mod youtube;
+mod sources;
+mod utils;
+
+use bot::{botFunctions, musicBot, queue};
+use geniusLyrics::geniusLyrics::getLyrics;
 
 struct Handler;
 
 // struct VoiceManager;
 #[group]
 #[commands(
-    play, pause, resume, stop, skip, toloop, endloop, help, config, queue, playlist, lyrics
+    play, pause, resume, stop, skip, toloop, endloop, help, /*config*/ queue, playlist, lyrics
 )]
 struct General;
 
@@ -51,12 +51,13 @@ impl EventHandler for Handler {
                             .unwrap()
                             .send_message(&ctx.http, |m| {
                                 m.embed(|e| {
-                                    e.field("Hola 👋", "Toy ready", true)
-                                        .colour(Colour::from_rgb(
+                                    e.field("Bot reportandose 🚀", "hola", true).colour(
+                                        Colour::from_rgb(
                                             rand::thread_rng().gen_range(0..255),
                                             rand::thread_rng().gen_range(0..255),
                                             rand::thread_rng().gen_range(0..255),
-                                        ))
+                                        ),
+                                    )
                                 })
                             })
                             .await
@@ -96,9 +97,9 @@ async fn main() {
 
 // functions which are called when a command is sent. For example: -play....
 #[command]
-#[aliases("p")]
+#[aliases("p", "P")]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
-    let trackName: Vec<&str> = stringToVector::getName(&msg.content[..]);
+    let trackName: Vec<&str> = utils::getName(&msg.content[..]);
 
     botFunctions::join(&ctx, &msg).await?;
 
@@ -154,70 +155,68 @@ async fn endloop(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn help(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.channel_id
-        .send_message(&ctx.http, |m| {
-            m.embed(|e| {
-                e.field("👨‍💻 Comandos:", ".", true)
-                    .fields(vec![
-                        ("⏯️  -p", "reproducir canciones", false),
-                        ("🛑  -pause:", "pausar una cancion", false),
-                        ("🛑  -stop", "frenar definitivamente una cancion", false),
-                        ("⏯️  -resume", "reanudar una cancion pausada", false),
-                        ("⏭️  -skip", "saltear una cacion", false),
-                        ("♾️  -toloop", "repetir la cancion infinitamente", false),
-                        ("🔁  -endloop", "frenar la repeticion", false),
-                        ("💻  -config", "entrar en la configuracion del bot", false),
-                        ("⏯️  -playlist", "reproducir una playlist de spotify", false),
-                        ("📜  -lyrics","obtener la letra de la cancion que se esta reproducioendo",false),
-                    ])
-                    .colour(Colour::from_rgb(
-                        rand::thread_rng().gen_range(0..255),
-                        rand::thread_rng().gen_range(0..255),
-                        rand::thread_rng().gen_range(0..255),
-                    ))
-            })
-        })
-        .await.unwrap();
+    let iterator = vec![
+        ("⏯️  -p", "reproducir canciones", false),
+        ("🛑  -pause:", "pausar una cancion", false),
+        ("🛑  -stop", "frenar definitivamente una cancion", false),
+        ("⏯️  -resume", "reanudar una cancion pausada", false),
+        ("⏭️  -skip", "saltear una cacion", false),
+        ("♾️  -toloop", "repetir la cancion infinitamente", false),
+        ("🔁  -endloop", "frenar la repeticion", false),
+        ("💻  -config", "entrar en la configuracion del bot", false),
+        ("⏯️  -playlist", "reproducir una playlist de spotify", false),
+        (
+            "📜  -lyrics",
+            "obtener la letra de la cancion que se esta reproducioendo",
+            false,
+        ),
+    ];
+
+    utils::sendMessageMultiLine(iterator, ctx, msg).await;
 
     Ok(())
 }
 
-#[command]
-async fn config(ctx: &Context, msg: &Message) -> CommandResult {
-    let config: Vec<&str> = stringToVector::getConfig(&msg.content[..]);
+// #[command]
+// async fn config(ctx: &Context, msg: &Message) -> CommandResult {
+//     let config: Vec<&str> = utils::getConfig(&msg.content[..]);
 
-    if config.len() == 1 {
-        msg.channel_id
-            .send_message(&ctx.http, |m| {
-                m.embed(|e| {
-                    e.field("👨‍💻 Configuracion:", ".", true)
-                        .fields(vec![("-config prefix", "valor", false)])
-                        .colour(Colour::from_rgb(
-                            rand::thread_rng().gen_range(0..255),
-                            rand::thread_rng().gen_range(0..255),
-                            rand::thread_rng().gen_range(0..255),
-                        ))
-                })
-            })
-            .await.unwrap();
-    } else if config.len() == 3 {
-        match config[1] {
-            "prefix" => env::set_var("PREFIX", config[2]),
-            _ => {
-                msg.channel_id.say(&ctx.http, "❌ | Ese comando no es correcto").await?;
-            }
-        }
-    } else {
-        msg.channel_id
-            .say(&ctx.http, "❌ | Ese comando no es correcto").await?;
-    }
+//     if config.len() == 1 {
+//         msg.channel_id
+//             .send_message(&ctx.http, |m| {
+//                 m.embed(|e| {
+//                     e.field("👨‍💻 Configuracion:", ".", true)
+//                         .fields(vec![("-config prefix", "valor", false)])
+//                         .colour(Colour::from_rgb(
+//                             rand::thread_rng().gen_range(0..255),
+//                             rand::thread_rng().gen_range(0..255),
+//                             rand::thread_rng().gen_range(0..255),
+//                         ))
+//                 })
+//             })
+//             .await
+//             .unwrap();
+//     } else if config.len() == 3 {
+//         match config[1] {
+//             "prefix" => env::set_var("PREFIX", config[2]),
+//             _ => {
+//                 msg.channel_id
+//                     .say(&ctx.http, "❌ | Ese comando no es correcto")
+//                     .await?;
+//             }
+//         }
+//     } else {
+//         msg.channel_id
+//             .say(&ctx.http, "❌ | Ese comando no es correcto")
+//             .await?;
+//     }
 
-    msg.channel_id
-        .say(&ctx.http, format!("{}", env::var("PREFIX").unwrap()))
-        .await?;
+//     msg.channel_id
+//         .say(&ctx.http, format!("{}", env::var("PREFIX").unwrap()))
+//         .await?;
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 #[command]
 async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
@@ -228,7 +227,7 @@ async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
-    let playListName: Vec<&str> = stringToVector::getName(&msg.content[..]);
+    let playListName: Vec<&str> = utils::getName(&msg.content[..]);
 
     botFunctions::join(&ctx, &msg).await?;
 
@@ -248,7 +247,7 @@ async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
         Some(handler) => handler,
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
-            .await?;
+                .await?;
 
             return Ok(());
         }
@@ -266,7 +265,7 @@ async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
     let currentTrack: Option<TrackHandle> = trackQueue.current();
 
     if let Some(track) = currentTrack {
-        geniusLyrics::getLyrics(
+        getLyrics(
             &ctx,
             &msg,
             &mut track.metadata().title.as_ref().unwrap().as_str(),
