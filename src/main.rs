@@ -99,7 +99,7 @@ async fn main() {
 #[command]
 #[aliases("p", "P")]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
-    let trackName: Vec<&str> = utils::getName(&msg.content[..]);
+    let trackName: Vec<&str> = utils::MessageToVector(&msg.content[..]);
 
     botFunctions::join(&ctx, &msg).await?;
 
@@ -227,7 +227,7 @@ async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
-    let playListName: Vec<&str> = utils::getName(&msg.content[..]);
+    let playListName: Vec<&str> = utils::MessageToVector(&msg.content[..]);
 
     botFunctions::join(&ctx, &msg).await?;
 

@@ -61,7 +61,7 @@ pub async fn sendMessageSingleLine(name:&str, value:&str, inline:bool, ctx: &Con
 }
 
 // get the song's or the playlist's name by conveting the message into a vector
-pub fn getName(msg: &str) -> Vec<&str> {
+pub fn MessageToVector(msg: &str) -> Vec<&str> {
     let bytes = msg.as_bytes();
     let mut stringVector = Vec::new();
     let cut = 0;

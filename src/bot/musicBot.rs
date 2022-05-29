@@ -1,5 +1,8 @@
 use serenity::{client::Context, framework::standard::CommandResult, model::channel::Message};
-use songbird::tracks::{TrackHandle, TrackQueue, TrackState};
+use songbird::tracks::{
+    PlayMode,
+    TrackHandle, TrackQueue, TrackState
+};
 
 use crate::utils;
 
@@ -12,7 +15,7 @@ pub async fn play(
     trackName: Option<&str>,
     playList: Option<&str>,
 ) -> CommandResult {
-    let mut break_: bool = false;
+    let mut breakable: bool = false;
 
     let mut handler = match utils::gethandler(ctx, msg).await.unwrap() {
         Some(handler) => handler.lock().await.clone(),
@@ -41,16 +44,32 @@ pub async fn play(
     };
 
     while !trackQueue.is_empty() {
-        if let Some(currentTrack) = &currentTrack {
-            currentTrack.play()?;
+        if trackStatus.unwrap().playing != PlayMode::Play {
+           match trackQueue.dequeue(0) {
+               Some(track) => {
+                   track.handle().play()?;
+               }
+               None => {
+                    msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
+                    .await?;
+
+                    return Ok(());
+               }
+           }  
         }
 
-        break_ = msg.content[..].starts_with("-p")
-            || msg.content[..].starts_with("-pause")
-            || msg.content[..].starts_with("-skip")
-            || msg.content[..].starts_with("-stop");
+        breakable = ctx.cache.channel_messages_field(msg.channel_id, |msgs| {
+            let lastMessage = utils::MessageToVector(&msgs.last().unwrap().content[..]);
 
-        if break_ {
+            //checks whether the users have requested another song 
+            lastMessage[1] != trackName.unwrap() && lastMessage[0] == "-p" && 
+            lastMessage[0] == "-play" && lastMessage[0] == "-stop" &&
+            lastMessage[0] == "-pause" && lastMessage[0] == "-skip" && lastMessage[0] == "-resume" && 
+            lastMessage[0] == "-toloop" && lastMessage[0] == "-endloop" && lastMessage[0] == "-help" && 
+            lastMessage[0] == "-lyrics" && lastMessage[0] == "-playlist"
+        }).await.unwrap();
+
+        if breakable {
             break;
         }
     }
