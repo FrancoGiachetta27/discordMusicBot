@@ -21,7 +21,7 @@ mod geniusLyrics;
 mod sources;
 mod utils;
 
-use bot::{botFunctions, musicBot, queue};
+use bot::{musicBot, queue};
 use geniusLyrics::geniusLyrics::getLyrics;
 
 struct Handler;
@@ -97,11 +97,11 @@ async fn main() {
 
 // functions which are called when a command is sent. For example: -play....
 #[command]
-#[aliases("p", "P")]
+#[aliases("p")]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     let trackName: Vec<&str> = utils::MessageToVector(&msg.content[..]);
 
-    botFunctions::join(&ctx, &msg).await?;
+    musicBot::join(&ctx, &msg).await?;
 
     if trackName.len() == 2 {
         musicBot::play(&ctx, &msg, Some(trackName[1]), None).await?;
@@ -127,7 +127,7 @@ async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
     musicBot::stop(&ctx, &msg).await?;
-    botFunctions::leave(&ctx, &msg).await?;
+    musicBot::leave(&ctx, &msg).await?;
 
     Ok(())
 }
@@ -163,7 +163,7 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
         ("⏭️  -skip", "saltear una cacion", false),
         ("♾️  -toloop", "repetir la cancion infinitamente", false),
         ("🔁  -endloop", "frenar la repeticion", false),
-        ("💻  -config", "entrar en la configuracion del bot", false),
+        //("💻  -config", "entrar en la configuracion del bot", false),
         ("⏯️  -playlist", "reproducir una playlist de spotify", false),
         (
             "📜  -lyrics",
@@ -229,7 +229,7 @@ async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
 async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
     let playListName: Vec<&str> = utils::MessageToVector(&msg.content[..]);
 
-    botFunctions::join(&ctx, &msg).await?;
+    musicBot::join(&ctx, &msg).await?;
 
     if playListName.len() == 2 {
         musicBot::play(&ctx, &msg, None, Some(playListName[1])).await?;

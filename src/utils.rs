@@ -9,23 +9,23 @@ use songbird::Call;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub async fn gethandler(ctx: &Context, msg: &Message) -> CommandResult<Option<Arc<Mutex<Call>>>> {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
+// pub async fn gethandler(ctx: &Context, msg: &Message) -> CommandResult<Option<Arc<Mutex<Call>>>> {
+//     let guild = msg.guild(&ctx.cache).await.unwrap();
+//     let guildId = guild.id;
+//     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
 
-    let handlerLock = match manager.get(guildId) {
-        Some(handler) => handler,
-        None => {
-            msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
-                .await?;
+//     let handlerLock = match manager.get(guildId) {
+//         Some(handler) => handler,
+//         None => {
+//             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
+//                 .await?;
 
-            return Ok(None);
-        }
-    };
+//             return Ok(None);
+//         }
+//     };
 
-    Ok(Some(handlerLock.to_owned()))
-}
+//     Ok(Some(handlerLock.to_owned()))
+// }
 
 pub async fn sendMessageMultiLine(iterator:Vec<(&str,&str,bool)>, ctx: &Context, msg: &Message) {
     msg.channel_id
