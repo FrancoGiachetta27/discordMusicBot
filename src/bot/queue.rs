@@ -8,35 +8,33 @@ use serenity::{
 use songbird::{tracks::TrackQueue, Call};
 
 //enqueues the source of the track found on youtube and returns the full
-pub async fn queue<'a>(
+pub async fn queueTrack<'a>(
     ctx: &Context,
     msg: &Message,
-    trackName: Option<&str>,
-    playListName: Option<&str>,
+    trackName: &str,
     handler: &'a mut Call,
 ) -> CommandResult<Option<&'a TrackQueue>> {
-    if let Some(trackName) = trackName {
-        let source = match youtube::getSource(&ctx, &msg, &trackName).await? {
-            Some(source) => source,
-            None => {
-                return Ok(None);
-            }
+    let source = match youtube::getSource(&ctx, &msg, &trackName).await? {
+        Some(source) => source,
+        None => {
+            return Ok(None);
+        }
+    };
+
+    if let Some(name) = &source.metadata.title {
+        let duration = match &source.metadata.duration {
+            Some(duration) => Duration::from_std(duration.to_owned()).unwrap(),
+            None => Duration::zero(),
         };
+        let url = &source.metadata.source_url.to_owned().unwrap();
+        let thumbnial = &source.metadata.thumbnail.to_owned().unwrap();
+        let artist = &source.metadata.artist.to_owned().unwrap();
+        let author = &msg.author.name;
 
-        if let Some(name) = &source.metadata.title {
-            let duration = match &source.metadata.duration {
-                Some(duration) => Duration::from_std(duration.to_owned()).unwrap(),
-                None => Duration::zero(),
-            };
-            let url = &source.metadata.source_url.to_owned().unwrap();
-            let thumbnial = &source.metadata.thumbnail.to_owned().unwrap();
-            let artist = &source.metadata.artist.to_owned().unwrap();
-            let author = &msg.author.name;
-
-            msg.channel_id
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.title(name)
+        msg.channel_id
+            .send_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.title(name)
                         .description("🎙️ Se ha añadido a la lista de canciones")
                         .fields(vec![
                             ("Autor: ", artist, true),
@@ -54,33 +52,41 @@ pub async fn queue<'a>(
                             rand::thread_rng().gen_range(0..255),
                             rand::thread_rng().gen_range(0..255),
                         ))
-                    });
+                });
 
-                    m
-                })
-                .await
-                .expect("Coudln't send the message");
-        }
+                m
+            })
+            .await
+            .expect("Coudln't send the message");
+    }
 
-        handler.enqueue_source(source);
-    } else if let Some(name) = playListName {
-        let playListResult = spotify::getPlayList(ctx, msg, name).await?;
+    handler.enqueue_source(source);
 
-        for track in playListResult.as_ref().unwrap().tracks.items.iter() {
-            match track.track.as_ref().unwrap() {
-                PlayableItem::Track(t) => {
-                    let source = match youtube::getSource(&ctx, &msg, &t.name[..]).await? {
-                        Some(source) => source,
-                        None => {
-                            return Ok(None);
-                        }
-                    };
+    Ok(Some(handler.queue()))
+}
 
-                    handler.enqueue_source(source);
-                }
-                _ => {
-                    return Ok(None);
-                }
+pub async fn queuePlayList<'a>(
+    ctx: &Context,
+    msg: &Message,
+    playListName: &str,
+    handler: &'a mut Call,
+) -> CommandResult<Option<&'a TrackQueue>> {
+    let playListResult = spotify::getPlayList(ctx, msg, playListName).await?;
+
+    for track in playListResult.as_ref().unwrap().tracks.items.iter() {
+        match track.track.as_ref().unwrap() {
+            PlayableItem::Track(t) => {
+                let source = match youtube::getSource(&ctx, &msg, &t.name[..]).await? {
+                    Some(source) => source,
+                    None => {
+                        return Ok(None);
+                    }
+                };
+
+                handler.enqueue_source(source);
+            }
+            _ => {
+                return Ok(None);
             }
         }
     }
@@ -107,15 +113,11 @@ pub async fn showQueueList(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue: &TrackQueue = match queue(ctx, msg, None, None, &mut handler).await? {
-        Some(queue) => queue,
-        None => {
-            return Ok(());
-        }
-    };
-
     let mut i = 0;
 
+    let trackQueue = handler.queue(); 
+
+    //iterate over the lists of tracks
     for track in trackQueue.current_queue().iter() {
         if let Some(trackName) = track.metadata().title.to_owned() {
             queueList.push((format!("💿 {}.", i + 1), trackName, false))

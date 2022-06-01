@@ -2,12 +2,8 @@ use rand::Rng;
 use serenity::{
     client::Context,
     model::channel::Message, 
-    framework::standard::CommandResult, 
     utils::Colour
 };
-use songbird::Call;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 // pub async fn gethandler(ctx: &Context, msg: &Message) -> CommandResult<Option<Arc<Mutex<Call>>>> {
 //     let guild = msg.guild(&ctx.cache).await.unwrap();

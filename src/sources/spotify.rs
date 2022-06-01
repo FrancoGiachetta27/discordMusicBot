@@ -36,7 +36,7 @@ pub async fn getPlayList(
     if let SearchResult::Playlists(list) = playListSearched {
         let playList = match spotify.playlist(&list.items[0].id, None, None) {
             Ok(playList) => playList,
-            Err(why) => {
+            Err(err) => {
                 msg.channel_id
                     .say(&ctx.http, "❌ | No se ha podido encontrar esa play list")
                     .await

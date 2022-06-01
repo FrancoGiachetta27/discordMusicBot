@@ -1,7 +1,6 @@
 use serenity::{client::Context, framework::standard::CommandResult, model::channel::Message};
 use songbird::tracks::{
-    PlayMode,
-    TrackHandle, TrackQueue, TrackState
+    TrackQueue,
 };
 
 use crate::utils;
@@ -36,31 +35,31 @@ pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 // makes the bot leave a channel
-pub async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = &msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone();
-    let hasHandler = manager.get(guildId).is_some();
+// pub async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
+//     let guild = &msg.guild(&ctx.cache).await.unwrap();
+//     let guildId = guild.id;
+//     let manager = songbird::get(&ctx).await.unwrap().clone();
+//     let hasHandler = manager.get(guildId).is_some();
 
-    if hasHandler {
-        if let Err(why) = manager.remove(guildId).await {
-            msg.channel_id
-                .say(&ctx.http, "❌ | Error al desconectar el bot")
-                .await?;
-        }
+//     if hasHandler {
+//         if let Err(why) = manager.remove(guildId).await {
+//             msg.channel_id
+//                 .say(&ctx.http, "❌ | Error al desconectar el bot")
+//                 .await?;
+//         }
 
-        msg.channel_id.say(&ctx.http, "Bot desconectado").await?;
-    }
+//         msg.channel_id.say(&ctx.http, "Bot desconectado").await?;
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 //play a track
 pub async fn play(
     ctx: &Context,
     msg: &Message,
     trackName: Option<&str>,
-    playList: Option<&str>,
+    playListName: Option<&str>,
 ) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guildId = guild.id;
@@ -78,13 +77,24 @@ pub async fn play(
 
     let mut handler = handlerLock.lock().await;
         
-    let trackQueue: &TrackQueue =
-        match queue::queue(ctx, msg, trackName, playList, &mut handler).await? {
-            Some(queue) => queue,
-            None => {
-                return Ok(());
+    let trackQueue: &TrackQueue = match trackName {
+        Some(track) => {
+            match queue::queueTrack(ctx, msg, trackName.unwrap(), &mut handler).await? {
+                Some(queue) => queue,
+                None => {
+                    return Ok(());
+                }
             }
-        };
+        }
+        None =>  {
+            match queue::queuePlayList(ctx, msg, playListName.unwrap(), &mut handler).await? {
+                Some(queue) => queue,
+                None => {
+                    return Ok(());
+                }
+            }
+        }
+    };
 
     if let Some(current) = trackQueue.current() {
         current.play()?;
@@ -111,12 +121,7 @@ pub async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
-        Some(queue) => queue,
-        None => {
-            return Ok(());
-        }
-    };
+    let trackQueue = handler.queue();
 
     trackQueue.stop(); // stops the track and deletes the trackQueue
 
@@ -141,12 +146,7 @@ pub async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
-        Some(queue) => queue,
-        None => {
-            return Ok(());
-        }
-    };
+    let trackQueue = handler.queue();
 
     trackQueue.pause()?;
 
@@ -171,12 +171,7 @@ pub async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
-        Some(queue) => queue,
-        None => {
-            return Ok(());
-        }
-    };
+    let trackQueue = handler.queue();
 
     match trackQueue.current() {
         Some(track) => {
@@ -209,12 +204,7 @@ pub async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
-        Some(queue) => queue,
-        None => {
-            return Ok(());
-        }
-    };
+    let trackQueue = handler.queue();
 
     trackQueue.skip()?;
 
@@ -246,12 +236,7 @@ pub async fn toLoop(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue: &TrackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
-        Some(queue) => queue,
-        None => {
-            return Ok(());
-        }
-    };
+    let trackQueue = handler.queue();
 
     if let Some(track) =  trackQueue.current() {
         match track.enable_loop() {
@@ -294,12 +279,7 @@ pub async fn endLoop(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut handler = handlerLock.lock().await;
 
-    let trackQueue: &TrackQueue = match queue::queue(ctx, msg, None, None, &mut handler).await? {
-        Some(queue) => queue,
-        None => {
-            return Ok(());
-        }
-    };
+    let trackQueue = handler.queue();
 
     if let Some(track) = trackQueue.current() {
         match track.disable_loop() {
