@@ -31,7 +31,6 @@ pub async fn get_play_list(
         Some(1),
         None,
     )?;
-    //let play_list_songs: Vec<(String, String, bool)> = Vec::new();
 
     if let SearchResult::Playlists(list) = play_list_searched {
         let play_list = match spotify.playlist(&list.items[0].id, None, None) {
