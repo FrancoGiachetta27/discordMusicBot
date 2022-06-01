@@ -8,13 +8,13 @@ use serenity::{
 use songbird::{tracks::TrackQueue, Call};
 
 //enqueues the source of the track found on youtube and returns the full
-pub async fn queueTrack<'a>(
+pub async fn queue_track<'a>(
     ctx: &Context,
     msg: &Message,
-    trackName: &str,
+    track_name: &str,
     handler: &'a mut Call,
 ) -> CommandResult<Option<&'a TrackQueue>> {
-    let source = match youtube::getSource(&ctx, &msg, &trackName).await? {
+    let source = match youtube::get_source(&ctx, &msg, &track_name).await? {
         Some(source) => source,
         None => {
             return Ok(None);
@@ -65,18 +65,18 @@ pub async fn queueTrack<'a>(
     Ok(Some(handler.queue()))
 }
 
-pub async fn queuePlayList<'a>(
+pub async fn queue_play_list<'a>(
     ctx: &Context,
     msg: &Message,
-    playListName: &str,
+    play_list_name: &str,
     handler: &'a mut Call,
 ) -> CommandResult<Option<&'a TrackQueue>> {
-    let playListResult = spotify::getPlayList(ctx, msg, playListName).await?;
+    let play_list_result = spotify::get_play_list(ctx, msg, play_list_name).await?;
 
-    for track in playListResult.as_ref().unwrap().tracks.items.iter() {
+    for track in play_list_result.as_ref().unwrap().tracks.items.iter() {
         match track.track.as_ref().unwrap() {
             PlayableItem::Track(t) => {
-                let source = match youtube::getSource(&ctx, &msg, &t.name[..]).await? {
+                let source = match youtube::get_source(&ctx, &msg, &t.name[..]).await? {
                     Some(source) => source,
                     None => {
                         return Ok(None);
@@ -95,13 +95,13 @@ pub async fn queuePlayList<'a>(
 }
 
 // shows the list of track that are in the track queue
-pub async fn showQueueList(ctx: &Context, msg: &Message) -> CommandResult {
-    let mut queueList: Vec<(String, String, bool)> = Vec::new();
+pub async fn show_queue_list(ctx: &Context, msg: &Message) -> CommandResult {
+    let mut queue_list: Vec<(String, String, bool)> = Vec::new();
     let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
+    let guild_id = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
 
-    let handlerLock = match manager.get(guildId) {
+    let handler_lock = match manager.get(guild_id) {
         Some(handler) => handler,
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
@@ -111,16 +111,16 @@ pub async fn showQueueList(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let mut handler = handlerLock.lock().await;
+    let handler = handler_lock.lock().await;
 
     let mut i = 0;
 
-    let trackQueue = handler.queue(); 
+    let track_queue = handler.queue(); 
 
     //iterate over the lists of tracks
-    for track in trackQueue.current_queue().iter() {
-        if let Some(trackName) = track.metadata().title.to_owned() {
-            queueList.push((format!("💿 {}.", i + 1), trackName, false))
+    for track in track_queue.current_queue().iter() {
+        if let Some(track_name) = track.metadata().title.to_owned() {
+            queue_list.push((format!("💿 {}.", i + 1), track_name, false))
         }
 
         i += 1
@@ -128,9 +128,9 @@ pub async fn showQueueList(ctx: &Context, msg: &Message) -> CommandResult {
 
     msg.channel_id
         .send_message(&ctx.http, |m| {
-            if !queueList.is_empty() {
+            if !queue_list.is_empty() {
                 m.embed(|e| {
-                    e.fields(queueList).colour(Colour::from_rgb(
+                    e.fields(queue_list).colour(Colour::from_rgb(
                         rand::thread_rng().gen_range(0..255),
                         rand::thread_rng().gen_range(0..255),
                         rand::thread_rng().gen_range(0..255),

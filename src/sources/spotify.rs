@@ -7,10 +7,10 @@ use rspotify::{
 };
 use serenity::{client::Context, model::channel::Message, utils::Colour};
 
-pub async fn getPlayList(
+pub async fn get_play_list(
     ctx: &Context,
     msg: &Message,
-    playListName: &str,
+    play_list_name: &str,
 ) -> ClientResult<Option<FullPlaylist>> {
     // You can use any logger for debugging.
     dotenv::dotenv().unwrap();
@@ -23,20 +23,20 @@ pub async fn getPlayList(
     // so `...` is used instead of `prompt_for_user_token`.
     spotify.request_token()?;
 
-    let playListSearched = spotify.search(
-        playListName,
+    let play_list_searched = spotify.search(
+        play_list_name,
         &SearchType::Playlist,
         None,
         None,
         Some(1),
         None,
     )?;
-    let mut playListSongs: Vec<(String, String, bool)> = Vec::new();
+    //let play_list_songs: Vec<(String, String, bool)> = Vec::new();
 
-    if let SearchResult::Playlists(list) = playListSearched {
-        let playList = match spotify.playlist(&list.items[0].id, None, None) {
-            Ok(playList) => playList,
-            Err(err) => {
+    if let SearchResult::Playlists(list) = play_list_searched {
+        let play_list = match spotify.playlist(&list.items[0].id, None, None) {
+            Ok(play_list) => play_list,
+            Err(_err) => {
                 msg.channel_id
                     .say(&ctx.http, "❌ | No se ha podido encontrar esa play list")
                     .await
@@ -49,9 +49,9 @@ pub async fn getPlayList(
         msg.channel_id
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
-                    e.field("🎸 PlayList:", &playList.name, true)
+                    e.field("🎸 PlayList:", &play_list.name, true)
                         .fields(
-                            playList
+                            play_list
                                 .tracks
                                 .items
                                 .iter()
@@ -74,7 +74,7 @@ pub async fn getPlayList(
             .await
             .expect("Coudln't send the message");
 
-        return Ok(Some(playList));
+        return Ok(Some(play_list));
     }
 
     Ok(None)

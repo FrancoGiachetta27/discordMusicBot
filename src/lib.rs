@@ -10,18 +10,17 @@ use serenity::{
     utils::Colour,
 };
 use songbird::{
-    tracks::{TrackHandle, TrackQueue},
     SerenityInit,
 };
 use std::env;
 
 mod bot;
-mod geniusLyrics;
+mod lyrics;
 mod sources;
 mod utils;
 
-use bot::{musicBot, queue};
-use geniusLyrics::geniusLyrics::getLyrics;
+use bot::{music_bot, queue};
+use lyrics::genius_lyrics::get_lyrics;
 
 struct Handler;
 
@@ -34,7 +33,7 @@ struct General;
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn message(&self, ctx: Context, msg: Message) {}
+    async fn message(&self, _ctx: Context, _msg: Message) {}
 
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("the DiscordBot is ready");
@@ -69,7 +68,7 @@ impl EventHandler for Handler {
     }
 }
 
-pub async fn clientBuilder(token:&str) -> Client {
+pub async fn client_builder(token:&str) -> Client {
     let framemwork = StandardFramework::new()
         .group(&GENERAL_GROUP)
         .configure(|c| {
@@ -77,7 +76,7 @@ pub async fn clientBuilder(token:&str) -> Client {
                 .prefix(env::var("PREFIX").unwrap().as_str())
         });
 
-    let mut client = Client::builder(&token)
+    let client = Client::builder(&token)
         .framework(framemwork)
         .event_handler(Handler)
         .register_songbird()
@@ -91,12 +90,12 @@ pub async fn clientBuilder(token:&str) -> Client {
 #[command]
 #[aliases("p")]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
-    let trackName: Vec<&str> = utils::MessageToVector(&msg.content[..]);
+    let track_name: Vec<&str> = utils::message_to_vector(&msg.content[..]);
 
-    musicBot::join(&ctx, &msg).await?;
+    music_bot::join(&ctx, &msg).await?;
 
-    if trackName.len() == 2 {
-        musicBot::play(&ctx, &msg, Some(trackName[1]), None).await?;
+    if track_name.len() == 2 {
+        music_bot::play(&ctx, &msg, Some(track_name[1]), None).await?;
     }
 
     Ok(())
@@ -104,42 +103,42 @@ async fn play(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::pause(&ctx, &msg).await?;
+    music_bot::pause(&ctx, &msg).await?;
 
     Ok(())
 }
 
 #[command]
 async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::resume(&ctx, &msg).await?;
+    music_bot::resume(&ctx, &msg).await?;
 
     Ok(())
 }
 
 #[command]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::stop(&ctx, &msg).await?;
+    music_bot::stop(&ctx, &msg).await?;
 
     Ok(())
 }
 
 #[command]
 async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::skip(&ctx, &msg).await?;
+    music_bot::skip(&ctx, &msg).await?;
 
     Ok(())
 }
 
 #[command]
 async fn toloop(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::toLoop(&ctx, &msg).await?;
+    music_bot::to_loop(&ctx, &msg).await?;
 
     Ok(())
 }
 
 #[command]
 async fn endloop(ctx: &Context, msg: &Message) -> CommandResult {
-    musicBot::endLoop(&ctx, &msg).await?;
+    music_bot::end_loop(&ctx, &msg).await?;
 
     Ok(())
 }
@@ -163,29 +162,29 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
         ),
     ];
 
-    utils::sendMessageMultiLine(iterator, ctx, msg).await;
+    utils::send_message_multi_line(iterator, ctx, msg).await;
 
     Ok(())
 }
 
-#[command]
-async fn config(ctx: &Context, msg: &Message) -> CommandResult {Ok(())}
+// #[command]
+// async fn config(ctx: &Context, msg: &Message) -> CommandResult {Ok(())}
 
 #[command]
 async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
-    queue::showQueueList(ctx, msg).await?;
+    queue::show_queue_list(ctx, msg).await?;
 
     Ok(())
 }
 
 #[command]
 async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
-    let playListName: Vec<&str> = utils::MessageToVector(&msg.content[..]);
+    let play_list_name: Vec<&str> = utils::message_to_vector(&msg.content[..]);
 
-    musicBot::join(&ctx, &msg).await?;
+    music_bot::join(&ctx, &msg).await?;
 
-    if playListName.len() == 2 {
-        musicBot::play(&ctx, &msg, None, Some(playListName[1])).await?;
+    if play_list_name.len() == 2 {
+        music_bot::play(&ctx, &msg, None, Some(play_list_name[1])).await?;
     }
     Ok(())
 }
@@ -193,10 +192,10 @@ async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guildId = guild.id;
+    let guild_id = guild.id;
     let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
 
-    let handlerLock = match manager.get(guildId) {
+    let handler_lock = match manager.get(guild_id) {
         Some(handler) => handler,
         None => {
             msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
@@ -206,12 +205,12 @@ async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let mut handler = handlerLock.lock().await;
+    let handler = handler_lock.lock().await;
 
-    let trackQueue = handler.queue();
+    let track_queue = handler.queue();
 
-    if let Some(track) = trackQueue.current() {
-        getLyrics(
+    if let Some(track) = track_queue.current() {
+        get_lyrics(
             &ctx,
             &msg,
             &mut track.metadata().title.as_ref().unwrap().as_str(),

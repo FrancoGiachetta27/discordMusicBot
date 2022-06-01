@@ -1,2 +1,2 @@
-pub mod musicBot;
+pub mod music_bot;
 pub mod queue;

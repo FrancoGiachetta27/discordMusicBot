@@ -7,7 +7,7 @@ async fn main() {
     dotenv::dotenv().expect(".env file not found");
 
     let token: String = env::var("TOKEN").unwrap();
-    let mut client = discord_bot::clientBuilder(&token).await;
+    let mut client = discord_bot::client_builder(&token).await;
 
     if let Err(why) = client.start().await {
         print!("Client Error {:?}", why);

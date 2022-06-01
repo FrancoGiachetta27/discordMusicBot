@@ -23,7 +23,7 @@ use serenity::{
 //     Ok(Some(handlerLock.to_owned()))
 // }
 
-pub async fn sendMessageMultiLine(iterator:Vec<(&str,&str,bool)>, ctx: &Context, msg: &Message) {
+pub async fn send_message_multi_line(iterator:Vec<(&str,&str,bool)>, ctx: &Context, msg: &Message) {
     msg.channel_id
         .send_message(&ctx.http, |m| {
                 m.embed(|e| {
@@ -40,7 +40,7 @@ pub async fn sendMessageMultiLine(iterator:Vec<(&str,&str,bool)>, ctx: &Context,
         .expect("Coudln't send the message");
 }
 
-pub async fn sendMessageSingleLine(name:&str, value:&str, inline:bool, ctx: &Context, msg: &Message) {
+pub async fn send_message_single_line(name:&str, value:&str, inline:bool, ctx: &Context, msg: &Message) {
     msg.channel_id
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
@@ -57,38 +57,38 @@ pub async fn sendMessageSingleLine(name:&str, value:&str, inline:bool, ctx: &Con
 }
 
 // get the song's or the playlist's name by conveting the message into a vector
-pub fn MessageToVector(msg: &str) -> Vec<&str> {
+pub fn message_to_vector(msg: &str) -> Vec<&str> {
     let bytes = msg.as_bytes();
-    let mut stringVector = Vec::new();
+    let mut string_vector = Vec::new();
     let cut = 0;
 
     for (i, &word) in bytes.iter().enumerate() {
         if word == b' ' {
-            stringVector.push(&msg[cut..i]);
-            stringVector.push(&msg[i..].trim());
+            string_vector.push(&msg[cut..i]);
+            string_vector.push(&msg[i..].trim());
 
             break;
         }
     }
 
-    return stringVector;
+    return string_vector;
 }
 
 // convert the message with the configuration into a vector
-pub fn getConfig(msg: &str) -> Vec<&str> {
-    let bytes = msg.as_bytes();
-    let mut stringVector = Vec::new();
-    let mut cut = 0;
+// pub fn get_config(msg: &str) -> Vec<&str> {
+//     let bytes = msg.as_bytes();
+//     let mut string_vector = Vec::new();
+//     let mut cut = 0;
 
-    for (i, &word) in bytes.iter().enumerate() {
-        if word == b' ' || i == bytes.len() - 1 {
-            stringVector.push(msg[cut..i + 1].trim());
+//     for (i, &word) in bytes.iter().enumerate() {
+//         if word == b' ' || i == bytes.len() - 1 {
+//             string_vector.push(msg[cut..i + 1].trim());
 
-            cut = i;
-        }
-    }
+//             cut = i;
+//         }
+//     }
 
-    println!("{:?}", stringVector);
+//     println!("{:?}", string_vector);
 
-    return stringVector;
-}
+//     return string_vector;
+// }
