@@ -7,7 +7,7 @@ use serenity::{
 };
 use songbird::{tracks::TrackQueue, Call};
 
-//enqueues the source of the track found on youtube and returns the full
+    //enqueues the source of the track found on youtube and returns the full queue
 pub async fn queue_track<'a>(
     ctx: &Context,
     msg: &Message,
@@ -65,6 +65,7 @@ pub async fn queue_track<'a>(
     Ok(Some(handler.queue()))
 }
 
+//enqueues the playlist found on spotify and returns the full queue
 pub async fn queue_play_list<'a>(
     ctx: &Context,
     msg: &Message,
