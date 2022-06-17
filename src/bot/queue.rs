@@ -30,6 +30,7 @@ pub async fn queue_track<'a>(
     Ok(Some(handler.queue()))
 }
 
+//enqueues the full playlist found on spotify and returns the full queue
 pub async fn queue_play_list<'a>(
     ctx: &Context,
     msg: &Message,
