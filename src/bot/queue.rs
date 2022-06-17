@@ -5,9 +5,9 @@ use rspotify::model::PlayableItem;
 use serenity::{
     client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
 };
-use songbird::{tracks::TrackQueue, Call};
+use songbird::{tracks::TrackQueue, Call, input::Input};
 
-    //enqueues the source of the track found on youtube and returns the full queue
+//enqueues the source of the track found on youtube and returns the full queue
 pub async fn queue_track<'a>(
     ctx: &Context,
     msg: &Message,
@@ -15,12 +15,51 @@ pub async fn queue_track<'a>(
     handler: &'a mut Call,
 ) -> CommandResult<Option<&'a TrackQueue>> {
     let source = match youtube::get_source(&ctx, &msg, &track_name).await? {
-        Some(source) => source,
+        Some(s) => {
+            let source = show_track_info(ctx, msg, s).await?;
+
+            source
+        },
         None => {
             return Ok(None);
         }
     };
 
+    handler.enqueue_source(source);
+
+    Ok(Some(handler.queue()))
+}
+
+pub async fn queue_play_list<'a>(
+    ctx: &Context,
+    msg: &Message,
+    play_list_name: &str,
+    handler: &'a mut Call,
+) -> CommandResult<Option<&'a TrackQueue>> {
+    let play_list_result = spotify::get_play_list(ctx, msg, play_list_name).await?;
+
+    for track in play_list_result.as_ref().unwrap().tracks.items.iter() {
+        match track.track.as_ref().unwrap() {
+            PlayableItem::Track(t) => {
+                let source = match youtube::get_source(&ctx, &msg, &t.name[..]).await? {
+                    Some(source) => source,
+                    None => {
+                        return Ok(None);
+                    }
+                };
+
+                handler.enqueue_source(source);
+            }
+            _ => {
+                return Ok(None);
+            }
+        }
+    }
+
+    Ok(Some(handler.queue()))
+}
+
+pub async fn show_track_info(ctx: &Context, msg: &Message, source: Input) -> CommandResult<Input> {
     if let Some(name) = &source.metadata.title {
         let duration = match &source.metadata.duration {
             Some(duration) => Duration::from_std(duration.to_owned()).unwrap(),
@@ -60,39 +99,7 @@ pub async fn queue_track<'a>(
             .expect("Coudln't send the message");
     }
 
-    handler.enqueue_source(source);
-
-    Ok(Some(handler.queue()))
-}
-
-//enqueues the playlist found on spotify and returns the full queue
-pub async fn queue_play_list<'a>(
-    ctx: &Context,
-    msg: &Message,
-    play_list_name: &str,
-    handler: &'a mut Call,
-) -> CommandResult<Option<&'a TrackQueue>> {
-    let play_list_result = spotify::get_play_list(ctx, msg, play_list_name).await?;
-
-    for track in play_list_result.as_ref().unwrap().tracks.items.iter() {
-        match track.track.as_ref().unwrap() {
-            PlayableItem::Track(t) => {
-                let source = match youtube::get_source(&ctx, &msg, &t.name[..]).await? {
-                    Some(source) => source,
-                    None => {
-                        return Ok(None);
-                    }
-                };
-
-                handler.enqueue_source(source);
-            }
-            _ => {
-                return Ok(None);
-            }
-        }
-    }
-
-    Ok(Some(handler.queue()))
+    Ok(source)
 }
 
 // shows the list of track that are in the track queue
@@ -116,7 +123,7 @@ pub async fn show_queue_list(ctx: &Context, msg: &Message) -> CommandResult {
 
     let mut i = 0;
 
-    let track_queue = handler.queue(); 
+    let track_queue = handler.queue();
 
     //iterate over the lists of tracks
     for track in track_queue.current_queue().iter() {
