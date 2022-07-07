@@ -95,7 +95,7 @@ async fn play(ctx: &Context, msg: &Message) -> CommandResult {
     music_bot::join(&ctx, &msg).await?;
 
     if track_name.len() == 2 {
-        music_bot::play(&ctx, &msg, Some(track_name[1]), None).await?;
+        music_bot::play(&ctx, &msg, Some(track_name[1].to_string()), None).await?;
     }
 
     Ok(())

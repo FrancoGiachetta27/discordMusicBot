@@ -5,27 +5,27 @@ use rspotify::model::PlayableItem;
 use serenity::{
     client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
 };
-use songbird::{tracks::TrackQueue, Call, input::Input};
+use songbird::{tracks::TrackQueue, Call, input::{Input, Restartable}};
 
 //enqueues the source of the track found on youtube and returns the full queue
 pub async fn queue_track<'a>(
     ctx: &Context,
     msg: &Message,
-    track_name: &str,
+    track_name: String,
     handler: &'a mut Call,
 ) -> CommandResult<Option<&'a TrackQueue>> {
-    let source = match youtube::get_source(&ctx, &msg, &track_name).await? {
-        Some(s) => {
-            let source = show_track_info(ctx, msg, s).await?;
-
-            source
+    let mut source = match youtube::get_source(&ctx, &msg, track_name).await? {
+        Some(src) => {
+            src.into()
         },
         None => {
             return Ok(None);
         }
     };
 
-    handler.enqueue_source(source);
+    source = show_track_info(ctx, msg, source).await?;
+
+    handler.enqueue_source(source.into());
 
     Ok(Some(handler.queue()))
 }
@@ -42,14 +42,14 @@ pub async fn queue_play_list<'a>(
     for track in play_list_result.as_ref().unwrap().tracks.items.iter() {
         match track.track.as_ref().unwrap() {
             PlayableItem::Track(t) => {
-                let source = match youtube::get_source(&ctx, &msg, &t.name[..]).await? {
+                let source = match youtube::get_source(&ctx, &msg, t.name.to_owned()).await? {
                     Some(source) => source,
                     None => {
                         return Ok(None);
                     }
                 };
 
-                handler.enqueue_source(source);
+                handler.enqueue_source(source.into());
             }
             _ => {
                 return Ok(None);

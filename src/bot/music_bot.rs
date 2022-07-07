@@ -58,7 +58,7 @@ pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
 pub async fn play(
     ctx: &Context,
     msg: &Message,
-    track_name: Option<&str>,
+    track_name: Option<String>,
     play_list_name: Option<&str>,
 ) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();

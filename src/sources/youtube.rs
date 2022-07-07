@@ -1,16 +1,18 @@
 use serenity::{client::Context, framework::standard::CommandResult, model::channel::Message};
-use songbird::input::{ytdl, ytdl_search, Input};
+use songbird::input::{
+    restartable::Restartable,
+};
 
 // gets the source of the track from youtube and returns it
 pub async fn get_source<'a>(
     ctx: &Context,
     msg: &Message,
-    track_name: &str,
-) -> CommandResult<Option<Input>> {
-    let source: Input;
+    track_name: String,
+) -> CommandResult<Option<Restartable>> {
+    let source: Restartable;
 
     if track_name.starts_with("https") || track_name.starts_with("http") {
-        source = match ytdl(&track_name).await {
+        source = match Restartable::ytdl(track_name, true).await {
             //gets the track from youtube by the url
             Ok(input) => input,
             Err(why) => {
@@ -24,7 +26,7 @@ pub async fn get_source<'a>(
             }
         };
     } else {
-        source = match ytdl_search(&track_name).await {
+        source = match Restartable::ytdl_search(&track_name,true).await {
             //gets the track from youtube by the song's name
             Ok(input) => input,
             Err(why) => {
