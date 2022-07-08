@@ -57,7 +57,7 @@ pub async fn send_message_single_line(name:&str, value:&str, inline:bool, ctx: &
 }
 
 // get the song's or the playlist's name by conveting the message into a vector
-pub fn message_to_vector(msg: &str) -> Vec<&str> {
+pub fn get_track_name(msg: &str) -> Vec<&str> {
     let bytes = msg.as_bytes();
     let mut string_vector = Vec::new();
     let cut = 0;
@@ -71,7 +71,24 @@ pub fn message_to_vector(msg: &str) -> Vec<&str> {
         }
     }
 
-    return string_vector;
+    string_vector
+}
+
+// gets the command behind the message
+pub fn message_to_command(msg: &str) -> Vec<&str> {
+    let bytes = msg.as_bytes();
+    let mut string_vector = Vec::new();
+    let mut cut = 0;
+
+    for (i, &word) in bytes.iter().enumerate() {
+        if msg[i + 1..].is_empty() || word == b' ' {
+            string_vector.push(msg[cut..i + 1].trim());
+
+            cut = i;
+        }
+    }
+
+   string_vector
 }
 
 // convert the message with the configuration into a vector

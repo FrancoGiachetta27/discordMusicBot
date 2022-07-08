@@ -5,7 +5,7 @@ use rspotify::model::PlayableItem;
 use serenity::{
     client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
 };
-use songbird::{tracks::TrackQueue, Call, input::{Input, Restartable}};
+use songbird::{tracks::TrackQueue, Call, input::{ Input }};
 
 //enqueues the source of the track found on youtube and returns the full queue
 pub async fn queue_track<'a>(

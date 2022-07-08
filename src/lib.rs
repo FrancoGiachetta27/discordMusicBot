@@ -1,3 +1,4 @@
+use std::time::Duration;
 use rand::Rng;
 use serenity::{
     async_trait,
@@ -6,8 +7,8 @@ use serenity::{
         CommandResult, StandardFramework,
     },
     model::{channel::Message, gateway::Ready, guild::GuildStatus, id::ChannelId},
-    prelude::*,
     utils::Colour,
+    prelude::*,
 };
 use songbird::{
     SerenityInit,
@@ -27,7 +28,7 @@ struct Handler;
 // struct VoiceManager;
 #[group]
 #[commands(
-    play, pause, resume, stop, skip, toloop, endloop, help, /*config*/ queue, playlist, lyrics
+    play, pause, resume, stop, skip, seek, toloop, endloop, help, /*config*/ queue, playlist, lyrics
 )]
 struct General;
 
@@ -90,7 +91,7 @@ pub async fn client_builder(token:&str) -> Client {
 #[command]
 #[aliases("p")]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
-    let track_name: Vec<&str> = utils::message_to_vector(&msg.content[..]);
+    let track_name: Vec<&str> = utils::get_track_name(&msg.content[..]);
 
     music_bot::join(&ctx, &msg).await?;
 
@@ -130,6 +131,37 @@ async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
+async fn seek(ctx: &Context, msg: &Message) -> CommandResult {
+    let content: Vec<&str> = utils::message_to_command(&msg.content[..]);
+    let mut time:Duration = Duration::new(0, 0);
+
+    match content[2] {
+        "-s" => {
+            time = Duration::from_secs_f64(content[1].parse::<f64>().unwrap());
+
+            utils::send_message_single_line(&format!("🦘 Salto al segundo {:?}", &time)[..],"-",false, ctx, msg).await;
+        }
+        "-m" => {
+            time = Duration::from_secs_f64(content[1].parse::<f64>().unwrap() * 60.0);
+            
+            utils::send_message_single_line(&format!("🦘 Salto al minuto {:?}", &time)[..],"-",false, ctx, msg).await;
+        },
+        "-h" => {
+            time = Duration::from_secs_f64(content[1].parse::<f64>().unwrap() * 360.0);
+
+            utils::send_message_single_line(&format!("🦘 Salto a la hora {:?}", &time)[..],"-",false, ctx, msg).await;
+        },
+        _ => {
+            utils::send_message_single_line("🛑 Comando incorrecto","-",false, ctx, msg).await;
+        }
+    }
+    
+    music_bot::seek(&ctx, &msg, time).await?;
+
+    Ok(())
+}
+
+#[command]
 async fn toloop(ctx: &Context, msg: &Message) -> CommandResult {
     music_bot::to_loop(&ctx, &msg).await?;
 
@@ -155,6 +187,7 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
         ("🔁  -endloop", "frenar la repeticion", false),
         //("💻  -config", "entrar en la configuracion del bot", false),
         ("⏯️  -playlist", "reproducir una playlist de spotify", false),
+        ("🔍  -seek numero -s/-m ", "saltar a un segundo/minuto deseado", false),
         (
             "📜  -lyrics",
             "obtener la letra de la cancion que se esta reproducioendo",
@@ -179,7 +212,7 @@ async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
 
 #[command]
 async fn playlist(ctx: &Context, msg: &Message) -> CommandResult {
-    let play_list_name: Vec<&str> = utils::message_to_vector(&msg.content[..]);
+    let play_list_name: Vec<&str> = utils::get_track_name(&msg.content[..]);
 
     music_bot::join(&ctx, &msg).await?;
 

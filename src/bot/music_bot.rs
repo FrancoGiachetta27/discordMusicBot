@@ -1,3 +1,4 @@
+use std::time::Duration;
 use serenity::{client::Context, framework::standard::CommandResult, model::channel::Message};
 use songbird::tracks::{
     TrackQueue,
@@ -241,7 +242,7 @@ pub async fn to_loop(ctx: &Context, msg: &Message) -> CommandResult {
     if let Some(track) = track_queue.current() {
         match track.enable_loop() {
             Ok(()) => {
-                utils::send_message_single_line("🔁 Loop habilitado", "", true, ctx, msg).await;
+                utils::send_message_single_line("🔁 Loop habilitado", "-", true, ctx, msg).await;
             }
             Err(why) => {
                 println!("Err {}", why);
@@ -284,7 +285,7 @@ pub async fn end_loop(ctx: &Context, msg: &Message) -> CommandResult {
     if let Some(track) = track_queue.current() {
         match track.disable_loop() {
             Ok(()) => {
-                utils::send_message_single_line("🛑 Loop deshabilitado", "", true, ctx, msg).await;
+                utils::send_message_single_line("🛑 Loop deshabilitado", "-", true, ctx, msg).await;
             }
             Err(why) => {
                 println!("Err {}", why);
@@ -292,7 +293,38 @@ pub async fn end_loop(ctx: &Context, msg: &Message) -> CommandResult {
                 return Ok(());
             }
         }
-    }
+    }   
 
     Ok(())
+}
+
+pub async fn seek(ctx: &Context, msg: &Message, time: Duration) -> CommandResult {
+    let guild = msg.guild(&ctx.cache).await.unwrap();
+    let guild_id = guild.id;
+    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
+
+    let handler_lock = match manager.get(guild_id) {
+        Some(handler_lock) => handler_lock,
+        None => {
+            msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
+                .await?;
+
+            return Ok(());
+        }
+    };
+
+    let handler = handler_lock.lock().await;
+
+    let track_queue = handler.queue();
+
+    if let Some(track) = track_queue.current() {
+        match track.seek_time(time) {
+            Ok(()) => {},
+            Err(_err) => {
+                utils::send_message_single_line("❌ Limite de tiempo sobrepasado", "-", true, ctx, msg).await;
+            }
+        };
+    }   
+
+   Ok(())
 }
