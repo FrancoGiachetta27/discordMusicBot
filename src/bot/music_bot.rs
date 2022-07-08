@@ -1,11 +1,9 @@
-use std::time::Duration;
 use serenity::{client::Context, framework::standard::CommandResult, model::channel::Message};
-use songbird::tracks::{
-    TrackQueue,
-};
+use songbird::tracks::TrackQueue;
+use std::time::Duration;
 
-use crate::utils;
 use crate::queue;
+use crate::utils;
 
 // makes the bot join the channel where the message's author is, if not in any channel it won't work
 pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
@@ -77,17 +75,15 @@ pub async fn play(
     };
 
     let mut handler = handler_lock.lock().await;
-        
+
     let track_queue: &TrackQueue = match track_name {
-        Some(track) => {
-            match queue::queue_track(ctx, msg, track, &mut handler).await? {
-                Some(queue) => queue,
-                None => {
-                    return Ok(());
-                }
+        Some(track) => match queue::queue_track(ctx, msg, track, &mut handler).await? {
+            Some(queue) => queue,
+            None => {
+                return Ok(());
             }
-        }
-        None =>  {
+        },
+        None => {
             match queue::queue_play_list(ctx, msg, play_list_name.unwrap(), &mut handler).await? {
                 Some(queue) => queue,
                 None => {
@@ -100,7 +96,7 @@ pub async fn play(
     if let Some(current) = track_queue.current() {
         current.play()?;
     };
-    
+
     Ok(())
 }
 
@@ -248,7 +244,7 @@ pub async fn to_loop(ctx: &Context, msg: &Message) -> CommandResult {
                 println!("Err {}", why);
                 utils::send_message_single_line(
                     "❌ Esta cancion no tiene la opcion 'loop' habilitada",
-                    "",
+                    "-",
                     true,
                     ctx,
                     msg,
@@ -293,7 +289,7 @@ pub async fn end_loop(ctx: &Context, msg: &Message) -> CommandResult {
                 return Ok(());
             }
         }
-    }   
+    }
 
     Ok(())
 }
@@ -319,12 +315,19 @@ pub async fn seek(ctx: &Context, msg: &Message, time: Duration) -> CommandResult
 
     if let Some(track) = track_queue.current() {
         match track.seek_time(time) {
-            Ok(()) => {},
+            Ok(()) => {}
             Err(_err) => {
-                utils::send_message_single_line("❌ Limite de tiempo sobrepasado", "-", true, ctx, msg).await;
+                utils::send_message_single_line(
+                    "❌ Limite de tiempo sobrepasado",
+                    "-",
+                    true,
+                    ctx,
+                    msg,
+                )
+                .await;
             }
         };
-    }   
+    }
 
-   Ok(())
+    Ok(())
 }
