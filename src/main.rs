@@ -1,6 +1,6 @@
+use discord_bot;
 use dotenv;
 use std::env;
-use discord_bot;
 
 #[tokio::main]
 async fn main() {
@@ -9,7 +9,13 @@ async fn main() {
     let token: String = env::var("TOKEN").unwrap();
     let mut client = discord_bot::client_builder(&token).await;
 
-    if let Err(why) = client.start().await {
-        print!("Client Error {:?}", why);
-    }
+    tokio::spawn(async move {
+        let _ = client
+            .start()
+            .await
+            .map_err(|why| println!("Client ended: {:?}", why));
+    });
+
+    tokio::signal::ctrl_c().await.unwrap();
+    println!("Received Ctrl-C, shutting down.");
 }

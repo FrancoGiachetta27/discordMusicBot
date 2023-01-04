@@ -6,12 +6,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serenity = { version = "0.10.9", default-features = false, features = ["cache","framework","standard_framework","client","gateway","rustls_backend","model"] }
-songbird = { version = "0.2.2", features = ["builtin-queue"]}
-tokio = { version = "1.0", features = ["macros","rt-multi-thread"] }
+serenity = { version = "0.11.5", default-features = false, features = ["cache","framework","standard_framework","client","gateway","rustls_backend","model","voice"] }
+songbird = { version = "0.3.0", features = ["builtin-queue"]}
+tokio = { version = "1.23.0", features = ["macros","rt-multi-thread"] }
 dotenv = { version = "0.15.0"}
 chrono = "0.4.19"
 rand = "0.8.4"
-rspotify = { version = "0.11.3", features = ["client-ureq", "ureq-rustls-tls"], default-features = false }
+rspotify = { version = "0.11.6", features = ["client-ureq", "ureq-rustls-tls"], default-features = false }
 genius-rs = "0.4.0"
 genius_lyrics = "1.0.2"

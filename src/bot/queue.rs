@@ -5,7 +5,7 @@ use rspotify::model::PlayableItem;
 use serenity::{
     client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
 };
-use songbird::{tracks::TrackQueue, Call, input::{ Input }};
+use songbird::{input::Input, tracks::TrackQueue, Call};
 
 //enqueues the source of the track found on youtube and returns the full queue
 pub async fn queue_track<'a>(
@@ -15,9 +15,7 @@ pub async fn queue_track<'a>(
     handler: &'a mut Call,
 ) -> CommandResult<Option<&'a TrackQueue>> {
     let mut source = match youtube::get_source(&ctx, &msg, track_name).await? {
-        Some(src) => {
-            src.into()
-        },
+        Some(src) => src.into(),
         None => {
             return Ok(None);
         }
@@ -104,23 +102,8 @@ pub async fn show_track_info(ctx: &Context, msg: &Message, source: Input) -> Com
 }
 
 // shows the list of track that are in the track queue
-pub async fn show_queue_list(ctx: &Context, msg: &Message) -> CommandResult {
+pub async fn show_queue_list(ctx: &Context, msg: &Message, handler: &mut Call) -> CommandResult {
     let mut queue_list: Vec<(String, String, bool)> = Vec::new();
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guild_id = guild.id;
-    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
-
-    let handler_lock = match manager.get(guild_id) {
-        Some(handler) => handler,
-        None => {
-            msg.reply(&ctx.http, "❌ | No estas en un canal de voz")
-                .await?;
-
-            return Ok(());
-        }
-    };
-
-    let handler = handler_lock.lock().await;
 
     let mut i = 0;
 

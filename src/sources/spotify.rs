@@ -16,7 +16,7 @@ pub async fn get_play_list(
     dotenv::dotenv().unwrap();
 
     let creds = Credentials::from_env().unwrap();
-    let mut spotify = ClientCredsSpotify::new(creds);
+    let spotify = ClientCredsSpotify::new(creds);
 
     // Obtainin the access token. Requires to be mutable because the internal
     // token will be modified. We don't need OAuth for this specific endpoint,
@@ -25,7 +25,7 @@ pub async fn get_play_list(
 
     let play_list_searched = spotify.search(
         play_list_name,
-        &SearchType::Playlist,
+        SearchType::Playlist,
         None,
         None,
         Some(1),
@@ -33,7 +33,7 @@ pub async fn get_play_list(
     )?;
 
     if let SearchResult::Playlists(list) = play_list_searched {
-        let play_list = match spotify.playlist(&list.items[0].id, None, None) {
+        let play_list = match spotify.playlist(list.items[0].id.clone(), None, None) {
             Ok(play_list) => play_list,
             Err(_err) => {
                 msg.channel_id

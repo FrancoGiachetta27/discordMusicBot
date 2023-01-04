@@ -6,7 +6,7 @@ use serenity::{
         macros::{help, hook},
         Args, CommandGroup, CommandResult, HelpOptions, StandardFramework,
     },
-    model::{channel::Message, gateway::Ready, guild::GuildStatus, id::ChannelId, prelude::UserId},
+    model::{channel::Message, gateway::Ready, id::ChannelId, prelude::UserId},
     prelude::*,
     utils::Colour,
 };
@@ -95,8 +95,9 @@ pub async fn client_builder(token: &str) -> Client {
         })
         .help(&HELP)
         .unrecognised_command(on_unknown_command);
+    let intents = GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT;
 
-    let client = Client::builder(&token)
+    let client = Client::builder(&token, intents)
         .framework(framemwork)
         .event_handler(Handler)
         .register_songbird()
