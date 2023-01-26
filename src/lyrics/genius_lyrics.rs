@@ -1,16 +1,18 @@
 use dotenv;
 use genius_lyrics;
 use genius_rs::Genius;
-use rand::Rng;
 use serenity::{
     framework::standard::CommandResult, model::channel::Message, prelude::*, utils::Colour,
 };
 use std::env;
 
+use crate::utils::get_rand_colors;
+
 pub async fn get_lyrics(ctx: &Context, msg: &Message, mut track_name: &str) -> CommandResult {
     dotenv::dotenv().expect(".env file not found");
 
     let genius = Genius::new(env::var("GENIUS_TOKEN").unwrap());
+    let (r_red, r_green, r_blue) = get_rand_colors();
 
     for (i, word) in track_name.bytes().enumerate() {
         if word == b'(' {
@@ -38,43 +40,43 @@ pub async fn get_lyrics(ctx: &Context, msg: &Message, mut track_name: &str) -> C
 
     if !lyrics.is_empty() {
         let mut count = 0;
-        let mut track_lyrics: Vec<(&str, &str, bool)> = Vec::new();
-
-        for (i, _word) in lyrics.bytes().enumerate() {
-            if i == 1020
-                || i == 2040
-                || i == 3060
-                || i == 4080
-                || i == 5100
-                || i == 6120
-                || i == 7140
-            {
-                track_lyrics.push(("-", &lyrics[count..i], false));
-
-                count = i;
-            } else if i == lyrics.bytes().len() - 1 {
-                track_lyrics.push(("-", &lyrics[count..i + 1], false));
-            }
-        }
+        let mut _track_lyrics: Vec<(&str, &str, bool)> = Vec::new();
 
         msg.channel_id
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
                     e.field(
-                        format!("🎸 {} ", track_name),
+                        format!("🎸 {}", track_name),
                         "--------------------------------------------------------------",
                         false,
                     )
-                    .fields(track_lyrics)
-                    .colour(Colour::from_rgb(
-                        rand::thread_rng().gen_range(0..255),
-                        rand::thread_rng().gen_range(0..255),
-                        rand::thread_rng().gen_range(0..255),
-                    ))
+                    .colour(Colour::from_rgb(r_red, r_green, r_blue))
                 })
             })
             .await
             .unwrap();
+
+        println!("{lyrics}");
+
+        for (i, _word) in lyrics.bytes().enumerate() {
+            if i == 1020 || i == 2000 || i == 4000 || i == 6000 || i == 8000 || i == 10000 {
+                msg.channel_id
+                    .send_message(&ctx.http, |m| {
+                        m.content(format!("```css\n{}\n```", &lyrics[count..i]))
+                    })
+                    .await
+                    .unwrap();
+
+                count = i;
+            } else if i == lyrics.bytes().len() - 1 {
+                msg.channel_id
+                    .send_message(&ctx.http, |m| {
+                        m.content(format!("```css\n{}\n```", &lyrics[count..i]))
+                    })
+                    .await
+                    .unwrap();
+            }
+        }
     } else {
         msg.channel_id
             .say(

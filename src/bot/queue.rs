@@ -1,6 +1,8 @@
-use crate::sources::{spotify, youtube};
+use crate::{
+    sources::{spotify, youtube},
+    utils::get_rand_colors,
+};
 use chrono::Duration;
-use rand::Rng;
 use rspotify::model::PlayableItem;
 use serenity::{
     client::Context, framework::standard::CommandResult, model::channel::Message, utils::Colour,
@@ -29,7 +31,7 @@ pub async fn queue_track<'a>(
 }
 
 //enqueues the full playlist found on spotify and returns the full queue
-pub async fn queue_play_list<'a>(
+pub async fn _queue_play_list<'a>(
     ctx: &Context,
     msg: &Message,
     play_list_name: &str,
@@ -68,31 +70,26 @@ pub async fn show_track_info(ctx: &Context, msg: &Message, source: Input) -> Com
         let thumbnial = &source.metadata.thumbnail.to_owned().unwrap();
         let artist = &source.metadata.artist.to_owned().unwrap();
         let author = &msg.author.name;
+        let (r_red, r_green, r_blue) = get_rand_colors();
 
         msg.channel_id
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
-                    e.title(name)
-                        .description("🎙️ Se ha añadido a la lista de canciones")
+                    e.title(format!("{}", name))
+                        .description("```css\n🎙️ Se ha añadido a la lista de canciones\n```")
                         .fields(vec![
                             ("Autor: ", artist, true),
                             ("Solicitado por:", author, true),
                             (
                                 "⌚ Duracion:",
-                                &format!("{} minutes", Duration::num_minutes(&duration)),
+                                &format!("{} minutos", Duration::num_minutes(&duration)),
                                 true,
                             ),
                         ])
                         .url(url)
                         .thumbnail(thumbnial)
-                        .colour(Colour::from_rgb(
-                            rand::thread_rng().gen_range(0..255),
-                            rand::thread_rng().gen_range(0..255),
-                            rand::thread_rng().gen_range(0..255),
-                        ))
-                });
-
-                m
+                        .colour(Colour::from_rgb(r_red, r_green, r_blue))
+                })
             })
             .await
             .expect("Coudln't send the message");
@@ -103,6 +100,7 @@ pub async fn show_track_info(ctx: &Context, msg: &Message, source: Input) -> Com
 
 // shows the list of track that are in the track queue
 pub async fn show_queue_list(ctx: &Context, msg: &Message, handler: &mut Call) -> CommandResult {
+    let (r_red, r_green, r_blue) = get_rand_colors();
     let mut queue_list: Vec<(String, String, bool)> = Vec::new();
 
     let mut i = 0;
@@ -122,11 +120,8 @@ pub async fn show_queue_list(ctx: &Context, msg: &Message, handler: &mut Call) -
         .send_message(&ctx.http, |m| {
             if !queue_list.is_empty() {
                 m.embed(|e| {
-                    e.fields(queue_list).colour(Colour::from_rgb(
-                        rand::thread_rng().gen_range(0..255),
-                        rand::thread_rng().gen_range(0..255),
-                        rand::thread_rng().gen_range(0..255),
-                    ))
+                    e.fields(queue_list)
+                        .colour(Colour::from_rgb(r_red, r_green, r_blue))
                 })
             } else {
                 m.content("⛔ No hay mas canciones en la lista...")

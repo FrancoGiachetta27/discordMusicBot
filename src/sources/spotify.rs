@@ -7,6 +7,8 @@ use rspotify::{
 };
 use serenity::{client::Context, model::channel::Message, utils::Colour};
 
+use crate::utils::get_rand_colors;
+
 pub async fn get_play_list(
     ctx: &Context,
     msg: &Message,
@@ -17,6 +19,7 @@ pub async fn get_play_list(
 
     let creds = Credentials::from_env().unwrap();
     let spotify = ClientCredsSpotify::new(creds);
+    let (r_red, r_green, r_blue) = get_rand_colors();
 
     // Obtainin the access token. Requires to be mutable because the internal
     // token will be modified. We don't need OAuth for this specific endpoint,
@@ -63,11 +66,7 @@ pub async fn get_play_list(
                                 })
                                 .collect::<Vec<(String, String, bool)>>(),
                         )
-                        .colour(Colour::from_rgb(
-                            rand::thread_rng().gen_range(0..255),
-                            rand::thread_rng().gen_range(0..255),
-                            rand::thread_rng().gen_range(0..255),
-                        ))
+                        .colour(Colour::from_rgb(r_red, r_green, r_blue))
                 })
             })
             .await

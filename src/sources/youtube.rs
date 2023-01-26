@@ -10,7 +10,7 @@ pub async fn get_source<'a>(
     let source: Restartable;
 
     if track_name.starts_with("https") || track_name.starts_with("http") {
-        source = match Restartable::ytdl(track_name, true).await {
+        source = match Restartable::ytdl_search(track_name, true).await {
             //gets the track from youtube by the url
             Ok(input) => input,
             Err(why) => {

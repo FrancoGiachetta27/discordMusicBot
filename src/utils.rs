@@ -6,14 +6,13 @@ pub async fn send_message_multi_line(
     ctx: &Context,
     msg: &Message,
 ) {
+    let (r_red, r_green, r_blue) = get_rand_colors();
+
     msg.channel_id
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
-                e.fields(iterator).colour(Colour::from_rgb(
-                    rand::thread_rng().gen_range(0..255),
-                    rand::thread_rng().gen_range(0..255),
-                    rand::thread_rng().gen_range(0..255),
-                ))
+                e.fields(iterator)
+                    .colour(Colour::from_rgb(r_red, r_green, r_blue))
             })
         })
         .await
@@ -27,16 +26,23 @@ pub async fn send_message_single_line(
     ctx: &Context,
     msg: &Message,
 ) {
+    let (r_red, r_green, r_blue) = get_rand_colors();
+
     msg.channel_id
         .send_message(&ctx.http, |m| {
             m.embed(|e| {
-                e.field(name, value, inline).colour(Colour::from_rgb(
-                    rand::thread_rng().gen_range(0..255),
-                    rand::thread_rng().gen_range(0..255),
-                    rand::thread_rng().gen_range(0..255),
-                ))
+                e.field(name, format!("```css\n{}\n```", value), inline)
+                    .colour(Colour::from_rgb(r_red, r_green, r_blue))
             })
         })
         .await
         .unwrap();
+}
+
+pub fn get_rand_colors() -> (u8, u8, u8) {
+    (
+        rand::thread_rng().gen_range(0..255),
+        rand::thread_rng().gen_range(0..255),
+        rand::thread_rng().gen_range(0..255),
+    )
 }

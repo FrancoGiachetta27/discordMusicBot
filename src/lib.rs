@@ -78,7 +78,7 @@ async fn help(
 async fn on_unknown_command(ctx: &Context, msg: &Message, unknown_command_name: &str) {
     utils::send_message_single_line(
         "Error",
-        format!("El comando {} no es correcto", unknown_command_name).as_str(),
+        format!("El comando '{}' no es correcto", unknown_command_name).as_str(),
         false,
         ctx,
         msg,

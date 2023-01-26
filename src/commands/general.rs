@@ -7,7 +7,7 @@ use serenity::{
     prelude::*,
 };
 use songbird::tracks::TrackQueue;
-use std::time::Duration;
+use std::time;
 
 use crate::bot::{music_bot, queue};
 use crate::lyrics::genius_lyrics::get_lyrics;
@@ -15,7 +15,7 @@ use crate::utils;
 
 #[group]
 #[commands(
-    play, pause, resume, stop, skip, seek, toloop, endloop, /*config*/ queue, /*playlist*/ lyrics
+    play, pause, resume, stop, skip, seek, toloop, endloop, time, queue, /*playlist*/ lyrics
 )]
 struct General;
 
@@ -150,11 +150,11 @@ async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     if let Some(handler_lock) = manager.get(guild_id) {
         let handler = handler_lock.lock().await;
         let content: Vec<&str> = args.raw().collect::<Vec<&str>>();
-        let mut time: Duration = Duration::new(0, 0);
+        let mut time: time::Duration = time::Duration::new(0, 0);
 
         match content[1] {
             "-s" => {
-                time = Duration::from_secs_f64(content[0].parse::<f64>().unwrap());
+                time = time::Duration::from_secs_f64(content[0].parse::<f64>().unwrap());
 
                 utils::send_message_single_line(
                     &format!("🦘 Salto al segundo {:?}", &time)[..],
@@ -166,7 +166,7 @@ async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
                 .await;
             }
             "-m" => {
-                time = Duration::from_secs_f64(content[0].parse::<f64>().unwrap() * 60.0);
+                time = time::Duration::from_secs_f64(content[0].parse::<f64>().unwrap());
 
                 utils::send_message_single_line(
                     &format!("🦘 Salto al minuto {:?}", &time)[..],
@@ -178,7 +178,7 @@ async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
                 .await;
             }
             "-h" => {
-                time = Duration::from_secs_f64(content[0].parse::<f64>().unwrap() * 360.0);
+                time = time::Duration::from_secs_f64(content[0].parse::<f64>().unwrap());
 
                 utils::send_message_single_line(
                     &format!("🦘 Salto a la hora {:?}", &time)[..],
@@ -319,7 +319,7 @@ async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
 // }
 
 #[command]
-#[usage = "📜  <prefix>lyrics"]
+#[usage = "📜 <prefix>lyrics"]
 #[description = "obtener la letra de la cancion que se esta reproducioendo"]
 async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).unwrap();
@@ -338,6 +338,47 @@ async fn lyrics(ctx: &Context, msg: &Message) -> CommandResult {
             )
             .await?;
         }
+    }
+
+    Ok(())
+}
+
+#[command]
+#[usage = "🕰️ <prefix>time"]
+#[description = "obtener el tiempo transcurrido de la cancion"]
+async fn time(ctx: &Context, msg: &Message) -> CommandResult {
+    let guild = msg.guild(&ctx.cache).unwrap();
+    let guild_id = guild.id;
+    let manager = songbird::get(&ctx).await.unwrap().clone(); // gets the voice client
+
+    if let Some(handler_lock) = manager.get(guild_id) {
+        let handler = handler_lock.lock().await;
+        let track_queue = handler.queue();
+
+        if let Some(track) = track_queue.current() {
+            let info = track.get_info().await.unwrap();
+            let time = chrono::Duration::from_std(info.play_time).unwrap();
+
+            if time > chrono::Duration::seconds(60) {
+            utils::send_message_single_line(
+                    "Tiempo ✋", 
+                    &format!("Han pasado {} minutos de reproduccion",
+                    time.num_minutes())[..], 
+                    false, 
+                    ctx, 
+                    msg
+                ).await;
+            }else {
+                utils::send_message_single_line(
+                    "Tiempo ✋", 
+                    &format!("Han pasado {} segundos de reproduccion",
+                    time.num_seconds())[..], 
+                    false, 
+                    ctx, 
+                    msg
+                ).await;
+            }
+        }    
     }
 
     Ok(())
